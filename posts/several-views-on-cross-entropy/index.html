@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Several views on cross-entropy — Mikhail Kuznetsov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+<!-- KaTeX (math rendering) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "$$", right: "$$", display: true},
+        {left: "\\[", right: "\\]", display: true},
+        {left: "$",  right: "$",  display: false},
+        {left: "\\(", right: "\\)", display: false}
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+</head>
+<body>
+<div class="wrap">
+
+  <nav>
+    <a href="/">Home</a>
+    <a href="/posts/">Blog</a>
+    <a href="/cv/Working_CV.pdf">CV</a>
+  </nav>
+
+  <article class="post">
+    <h1>Several views on cross-entropy</h1>
+    <div class="meta">2026-05-31</div>
+
+    <p>Cross-entropy is the loss you reach for almost by reflex in classification.
+      But the same object shows up under several different names depending on which
+      field you ask. They are all the same equation; only the story changes. Everything
+      below hangs off one identity:</p>
+
+    <div class="callout">
+      $$ H(p, q_\theta) \;=\; H(p) \;+\; D_{\mathrm{KL}}(p \,\|\, q_\theta) $$
+    </div>
+
+    <p>Since $H(p)$ does not depend on the model parameters $\theta$, minimizing
+      cross-entropy is exactly minimizing the KL divergence from the data
+      distribution to the model. The views below are different ways of reading
+      this fact.</p>
+
+    <h3><span class="n">1.</span>Maximum likelihood</h3>
+    <p>Cross-entropy is the expected negative log-likelihood:</p>
+    $$ H(p, q_\theta) = -\,\mathbb{E}_{x \sim p}\big[\log q_\theta(x)\big]. $$
+    <p>With samples $x_1, \dots, x_n \sim p$ this is approximated by the empirical mean,</p>
+    $$ H(p, q_\theta) \approx -\frac{1}{n} \sum_{i=1}^{n} \log q_\theta(x_i), $$
+    <p>which is precisely the negative log-likelihood. So minimizing cross-entropy is
+      maximizing likelihood:</p>
+    $$ \arg\min_\theta H(p, q_\theta) = \arg\max_\theta \sum_{i=1}^{n} \log q_\theta(x_i). $$
+
+    <h3><span class="n">2.</span>KL divergence</h3>
+    <p>Starting from the definition of KL divergence and splitting the logarithm,</p>
+    $$ D_{\mathrm{KL}}(p \,\|\, q_\theta)
+       = \mathbb{E}_p\!\left[\log \frac{p(x)}{q_\theta(x)}\right]
+       = \mathbb{E}_p[\log p(x)] - \mathbb{E}_p[\log q_\theta(x)]. $$
+    <p>Recognizing $H(p) = -\,\mathbb{E}_p[\log p(x)]$ and
+      $H(p,q_\theta) = -\,\mathbb{E}_p[\log q_\theta(x)]$ gives
+      $D_{\mathrm{KL}}(p \,\|\, q_\theta) = H(p,q_\theta) - H(p)$, which rearranges into the
+      identity at the top. This is the information-theoretic reading: training pulls
+      the model distribution toward the true one.</p>
+
+    <h3><span class="n">3.</span>Coding theory</h3>
+    <p>Entropy $H(p)$ is the optimal expected code length when you know the true
+      distribution $p$. Cross-entropy $H(p,q)$ is the expected code length when the
+      data really comes from $p$ but you encode it with a code optimized for $q$.
+      The gap between them is the price of using the wrong code:</p>
+    $$ D_{\mathrm{KL}}(p \,\|\, q) = H(p, q) - H(p). $$
+    <p>In one line:</p>
+    <div class="callout">cross-entropy = irreducible uncertainty + model-mismatch penalty.</div>
+
+    <h3><span class="n">4.</span>Classification</h3>
+    <p>For single-label classification the target $p$ is one-hot on the true class $y$,
+      so the sum collapses to a single term:</p>
+    $$ H(p, q) = -\sum_k p(k)\,\log q(k) = -\log q(y). $$
+    <p>The loss depends only on the probability the model assigns to the correct class.
+      A confident-correct prediction $q(y)=0.9$ costs $-\log 0.9 \approx 0.11$, while a
+      confident-wrong one $q(y)=0.01$ costs $-\log 0.01 \approx 4.61$. The logarithm is
+      what makes the penalty for confident mistakes blow up.</p>
+
+    <figure>
+      <img src="artifacts/cross-entropy-loss.png" alt="Cross-entropy loss versus predicted probability of the true class">
+      <figcaption>$-\log q(y)$ as a function of the probability placed on the true class.</figcaption>
+    </figure>
+
+    <h3><span class="n">5.</span>Proper scoring rule</h3>
+    <p>Cross-entropy is a <em>proper</em> scoring rule: its expected value is minimized
+      when the model reports the true probabilities. If the true conditional is
+      $p(y \mid x)$, the optimum is</p>
+    $$ q_\theta(y \mid x) = p(y \mid x). $$
+    <p>So it rewards more than getting the label right — it rewards calibrated
+      probabilities over the whole distribution. That is why it is trained against
+      instead of accuracy, which only looks at the $\arg\max$.</p>
+
+    <h3><span class="n">6.</span>Forward vs. reverse KL</h3>
+    <p>Minimizing cross-entropy minimizes the <em>forward</em> KL,
+      $D_{\mathrm{KL}}(p \,\|\, q_\theta)$. It pays a large cost wherever $p$ has mass but
+      $q_\theta$ does not, so it is <em>mode-covering</em>: the model is pushed to spread
+      over every mode of $p$. The reverse direction, $D_{\mathrm{KL}}(q_\theta \,\|\, p)$,
+      tends to be <em>mode-seeking</em> — it can lock onto a single mode and ignore the
+      rest. The distinction is central to variational inference and generative modeling.</p>
+
+    <h3><span class="n">★</span>Summary</h3>
+    <table>
+      <tr><th>View</th><th>What cross-entropy means</th></tr>
+      <tr><td>MLE</td><td>negative log-likelihood of the data</td></tr>
+      <tr><td>KL divergence</td><td>distance from the true distribution to the model</td></tr>
+      <tr><td>Coding theory</td><td>extra code length from using the wrong distribution</td></tr>
+      <tr><td>Classification</td><td>penalty on low probability for the correct class</td></tr>
+      <tr><td>Proper scoring</td><td>incentive for calibrated probabilities</td></tr>
+      <tr><td>Forward KL</td><td>mode-covering fit of model to data</td></tr>
+    </table>
+
+    <p class="muted">All ten derivations (including the Bayesian / MAP, soft-label, and
+      logistic-regression readings) live in my notes; the six above are the ones I find
+      myself reaching for most.</p>
+  </article>
+
+  <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
+
+</div>
+</body>
+</html>

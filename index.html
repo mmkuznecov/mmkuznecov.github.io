@@ -1,37 +1,90 @@
 <!DOCTYPE html>
-<html>
- <head>
-  <meta charset="utf-8">
-  <title>Mikhail Kuznetsov</title>
-  <style>
-   @font-face {
-    font-family: JetBrainsMonoBold;     
-    src: url(fonts/JetBrainsMono-ExtraBold.ttf);
-    
-    font-family: JetBrainsMonoLight; 
-    src: url(fonts/JetBrainsMono-Light.ttf);
-   }
-   h1 {
-    font-family: JetBrainsMono, 'JetBrainsMonoLight';
-   }
-   p {
-    font-family: JetBrainsMono, 'JetBrainsMonoLight';
-   }
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mikhail Kuznetsov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+<div class="wrap">
 
-  </style>
- </head>
- <body>
-  <center><h1><b> </b></h1><center>
-  <br>
-  <center></center><p><img src="images/photo.jpg", width="200" height="200"></p></center>
-  <center><p style="color:black;font-size:32px;">Mikhail Kuznetsov</p><center>
-  <center><p>Hi ✌🏻, I'm Mikhail, machine learning engineer, bachelor software engineering student at NRNU MEPhI.</p></center>
-  <center><p>Interested in machine learning, computational mathematics and robotics.</p></center>
-  <br>
-  <center>❤️</center>
-		<p><a href="https://t.me/mmkuznecov">Telegram</a></p>
-		<p><a href="https://vk.com/mmkuznecov">VK</a></p>
-        <p><a href="https://github.com/mmkuznecov">GitHub</a></p>
-        <p><a href="cv/Working_CV.pdf">CV</a></p>
- </body>
+  <!-- HEADER -->
+  <header class="top">
+    <h1>Mikhail Kuznetsov</h1>
+    <p class="role">ML / Research Engineer <span class="accent">·</span> perception &amp; autonomous driving</p>
+    <p class="role">M.Sc. student @ Skolkovo Institute of Science and Technology</p>
+  </header>
+
+  <!-- NAV / LINKS -->
+  <nav>
+    <a href="/cv/Working_CV.pdf">CV</a>
+    <a href="https://github.com/mmkuznecov">GitHub</a>
+    <a href="https://www.kaggle.com/mmkuznecov">Kaggle</a>
+    <a href="https://t.me/mmkuznecov">Telegram</a>
+    <a href="mailto:mmkuznecov2002@gmail.com">Email</a>
+    <a href="/posts/">Blog</a>
+  </nav>
+
+  <!-- ABOUT -->
+  <section>
+    <p>I work on machine learning for perception, 3D, and autonomous driving.
+       Interested in computational mathematics and robotics.</p>
+  </section>
+
+  <!-- NOW / EXPERIENCE -->
+  <section>
+    <h2>Now</h2>
+    <div class="entry">
+      <div class="head"><span class="what">Research Engineer — MSU AI Research Center</span><span class="when">2025 — now</span></div>
+      <div class="sub">Perception and autonomous driving technologies.</div>
+    </div>
+    <div class="entry">
+      <div class="head"><span class="what">M.Sc. Advanced Computational Science — Skoltech</span><span class="when">2024 — now</span></div>
+      <div class="sub">+ Yandex School of Data Analysis (YSDA), Data Analysis &amp; AI in Applied Sciences.</div>
+    </div>
+    <div class="entry">
+      <div class="head"><span class="what">Previously: Data Scientist — SberAI</span><span class="when">2023 — 2025</span></div>
+      <div class="sub">Point cloud completion, 3D avatar generation, facial attribute analysis, multimodal search.</div>
+    </div>
+  </section>
+
+  <!-- PUBLICATIONS -->
+  <section>
+    <h2>Selected Publications</h2>
+    <ul class="pubs">
+      <li><a href="https://whesense.github.io/">Visual Implicit Geometry Transformer for Autonomous Driving</a>
+          <div class="venue">IJCAI 2026</div></li>
+      <li><a href="https://openreview.net/forum?id=EwaNoLlEXT">Information-Theoretic Unsupervised Embedding Quality Evaluation</a>
+          <div class="venue">ICLR 2026 Workshop</div></li>
+      <li><a href="https://dl.acm.org/doi/10.1145/3711896.3737394">MonoDeMB: Comprehensive Monocular DepthMap Benchmark</a>
+          <div class="venue">KDD 2025</div></li>
+      <li><a href="https://www.scitepress.org/PublishedPapers/2024/123981/">ImgAdaPoinTr: Point Cloud Completion via Images &amp; Segmentation</a>
+          <div class="venue">VISIGRAPP 2024</div></li>
+      <li><a href="https://arxiv.org/abs/2306.04288">Revising Deep Learning Methods in Parking Lot Occupancy Detection</a>
+          <div class="venue">arXiv</div></li>
+    </ul>
+  </section>
+
+  <!-- SKILLS -->
+  <section>
+    <h2>Stack</h2>
+    <div class="tags">
+      <span class="tag">Python</span><span class="tag">C / C++</span>
+      <span class="tag">PyTorch</span><span class="tag">PyTorch3D</span><span class="tag">OpenCV</span><span class="tag">HuggingFace</span>
+      <span class="tag">FastAPI</span><span class="tag">TorchServe</span><span class="tag">Celery</span><span class="tag">RabbitMQ</span>
+      <span class="tag">PostgreSQL</span><span class="tag">Docker</span><span class="tag">WandB</span>
+    </div>
+  </section>
+
+  <footer>
+    © Mikhail Kuznetsov ·
+    <a href="https://github.com/mmkuznecov/mmkuznecov.github.io">source</a>
+  </footer>
+
+</div>
+</body>
 </html>
