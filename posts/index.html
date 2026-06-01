@@ -16,16 +16,32 @@
     <div class="wrap">
       <header class="top">
         <h1>Blog</h1>
-        <p class="role">notes on machine learning, math, and things I find interesting</p>
+        <p class="role">
+          notes on machine learning, math, and things I find interesting
+        </p>
       </header>
-
       <nav>
         <a href="/">Home</a>
         <a href="/cv/Working_CV.pdf">CV</a>
         <a href="https://github.com/mmkuznecov">GitHub</a>
       </nav>
-
       <ul class="post-list">
+        <li>
+          <a class="title" href="/posts/mle-and-map/"
+            >Maximum likelihood and maximum a posteriori</a
+          >
+          <div class="meta">
+            2026-06-02 ·
+            <a href="/posts/mle-and-map/artifacts/experiments.ipynb"
+              >notebook</a
+            >
+          </div>
+          <div class="excerpt">
+            The two standard methods for estimating model parameters:
+            definitions, worked examples, how they relate as the sample grows,
+            and the zero-count problem that motivates smoothing.
+          </div>
+        </li>
         <li>
           <a class="title" href="/posts/several-views-on-cross-entropy/"
             >Several views on cross-entropy</a
@@ -38,15 +54,14 @@
             >
           </div>
           <div class="excerpt">
-            From the likelihood of a Bernoulli model,
-            cross-entropy falls out on its own — then the same object reappears
-            as KL divergence, code length, a calibration score, and
-            mode-covering KL. Ends with why MSE is the wrong loss for
+            From the likelihood of a Bernoulli model, cross-entropy follows as
+            the negative log-likelihood, and the same quantity reappears as KL
+            divergence, code length, a proper scoring rule, and mode-covering
+            KL. Concludes with the comparison to squared error for
             classification.
           </div>
         </li>
       </ul>
-
       <footer>© Mikhail Kuznetsov · <a href="/">home</a></footer>
     </div>
   </body>

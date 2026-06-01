@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Maximum likelihood and maximum a posteriori — Mikhail Kuznetsov
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+          ],
+          throwOnError: false,
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav>
+        <a href="/">Home</a>
+        <a href="/posts/">Blog</a>
+        <a href="/cv/Working_CV.pdf">CV</a>
+      </nav>
+
+      <article class="post">
+        <h1>Maximum likelihood and maximum a posteriori</h1>
+        <div class="meta">2026-06-02</div>
+
+        <p>
+          Maximum likelihood estimation (MLE) and maximum a posteriori
+          estimation (MAP) are the two standard methods for fitting the
+          parameters of a probabilistic model. They differ in one component: MAP
+          introduces a prior distribution over the parameters, and MLE does not.
+          This post states both estimators, works through standard examples,
+          describes how they relate as the sample size increases, and examines
+          the zero-count problem that arises when MLE is applied to categorical
+          data.
+        </p>
+
+        <h3><span class="n">1.</span>Maximum likelihood estimation</h3>
+        <p>
+          Let $D = \{x_1, \dots, x_n\}$ be observations drawn independently from
+          a model $p(x; \theta)$ with parameter $\theta$. The likelihood of the
+          data is the product of the per-observation densities, and the
+          log-likelihood is the corresponding sum:
+        </p>
+        $$ \ell(\theta) = \sum_{i=1}^{n} \log p(x_i; \theta). $$
+        <p>
+          The maximum likelihood estimate is the parameter that maximizes this
+          quantity, $\hat\theta_{\text{MLE}} = \arg\max_\theta \ell(\theta)$. At
+          an interior maximum the gradient is zero, which gives the estimating
+          equation
+        </p>
+        $$ \sum_{i=1}^{n} \nabla_\theta \log p(x_i; \theta) = 0. $$
+        <p>
+          For $n$ Bernoulli trials with $k$ successes, the log-likelihood is
+          $\ell(\theta) = k \log \theta + (n-k)\log(1-\theta)$. Setting its
+          derivative to zero gives $\hat\theta_{\text{MLE}} = k/n$, the observed
+          frequency. This is the estimator behind the cross-entropy objective
+          discussed in the
+          <a href="/posts/several-views-on-cross-entropy/">previous post</a>.
+          For observations from a Poisson distribution with rate $\lambda$, the
+          same procedure gives $\hat\lambda_{\text{MLE}} = \bar{x}$, the sample
+          mean.
+        </p>
+        <p>
+          Under standard regularity conditions the MLE has two properties used
+          throughout. It is consistent and asymptotically normal,
+        </p>
+        $$ \sqrt{n}\,(\hat\theta - \theta_0) \xrightarrow{d} N\!\big(0,\,
+        I_1(\theta_0)^{-1}\big), $$
+        <p>
+          where $I_1$ is the Fisher information of a single observation, and its
+          asymptotic variance attains the Cramér–Rao lower bound. It is also
+          invariant under reparameterization: if $\hat\theta$ is the MLE of
+          $\theta$, then $g(\hat\theta)$ is the MLE of $g(\theta)$.
+        </p>
+
+        <h3><span class="n">2.</span>Maximum a posteriori estimation</h3>
+        <p>
+          Maximum a posteriori estimation treats $\theta$ as a random variable
+          with a prior distribution $p(\theta)$. By Bayes' rule the posterior is
+          proportional to the product of the likelihood and the prior, $p(\theta
+          \mid D) \propto p(D \mid \theta)\, p(\theta)$. The MAP estimate is the
+          posterior mode:
+        </p>
+        $$ \hat\theta_{\text{MAP}} = \arg\max_\theta \big[\ell(\theta) + \log
+        p(\theta)\big] = \arg\min_\theta \big[-\ell(\theta) - \log
+        p(\theta)\big]. $$
+        <p>
+          Compared with MLE, the only additional term is $-\log p(\theta)$,
+          which acts as a regularizer. A Gaussian prior $\theta \sim N(0, \tau^2
+          I)$ contributes a term proportional to $\|\theta\|_2^2$, which is
+          ridge ($\ell_2$) regularization. A Laplace prior contributes a term
+          proportional to $\|\theta\|_1$, which is Lasso ($\ell_1$)
+          regularization.
+        </p>
+        <p>
+          As an example, consider again $k$ successes in $n$ Bernoulli trials,
+          now with a $\text{Beta}(\alpha,\beta)$ prior on $\theta$. The Beta
+          family is conjugate to the Bernoulli likelihood, so the posterior is
+          again a Beta distribution, $\text{Beta}(k+\alpha,\, n-k+\beta)$. The
+          MLE, the MAP mode, and the posterior mean are
+        </p>
+        $$ \hat\theta_{\text{MLE}} = \frac{k}{n}, \qquad \hat\theta_{\text{MAP}}
+        = \frac{k+\alpha-1}{n+\alpha+\beta-2}, \qquad \mathbb{E}[\theta \mid D]
+        = \frac{k+\alpha}{n+\alpha+\beta}. $$
+
+        <figure>
+          <img
+            src="artifacts/beta-bernoulli.png"
+            alt="Beta-Bernoulli prior, likelihood, and posterior with MLE, MAP, and posterior mean marked"
+          />
+          <figcaption>
+            Beta-Bernoulli with $k=7$, $n=10$, and a $\text{Beta}(2,2)$ prior.
+            The MLE, MAP mode, and posterior mean differ at finite $n$.
+          </figcaption>
+        </figure>
+
+        <p>
+          With a uniform prior ($\alpha=\beta=1$) the penalty term is constant
+          and the MAP mode coincides with the MLE. A second standard case is the
+          Gaussian model: for $x_1,\dots,x_n \sim N(\mu, \sigma^2)$ with known
+          $\sigma^2$ and prior $\mu \sim N(\mu_0, \tau^2)$, the posterior is
+          Gaussian and its mode equals its mean,
+        </p>
+        $$ \hat\mu_{\text{MAP}} = w\,\bar{x} + (1-w)\,\mu_0, \qquad w =
+        \frac{n/\sigma^2}{n/\sigma^2 + 1/\tau^2}. $$
+        <p>
+          The estimate is a precision-weighted average of the sample mean and
+          the prior mean. As $n$ increases, $w$ approaches $1$ and the estimate
+          approaches the sample mean.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/gaussian-shrinkage.png"
+            alt="Weight on the data mean as a function of sample size in the Gaussian-Gaussian model"
+          />
+          <figcaption>
+            Gaussian-Gaussian model: the weight $w$ on the sample mean increases
+            with the number of observations.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">3.</span>Relationship as the sample grows</h3>
+        <p>
+          The two estimators differ only through the prior term, and its role
+          diminishes as data accumulate. In the MAP estimating equation
+        </p>
+        $$ \nabla \ell(\theta) + \nabla \log p(\theta) = 0, $$
+        <p>
+          the first term is a sum of $n$ contributions and grows on the order of
+          $n$, while the second does not depend on $n$. As $n$ increases the
+          prior term becomes negligible relative to the data term, and the MAP
+          estimate approaches the MLE; the difference is of order $1/n$. A flat
+          prior makes the two estimators coincide for every sample size.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/prior-washout.png"
+            alt="Posterior distributions for increasing sample size concentrating on the true parameter"
+          />
+          <figcaption>
+            A $\text{Beta}(2,6)$ prior with mean $0.25$ and data generated with
+            $\theta=0.7$. As $n$ increases the posterior concentrates near the
+            data, and the MAP mode moves away from the prior toward $k/n$.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">4.</span>The zero-count problem</h3>
+        <p>
+          Categorical data exposes a concrete failure of the MLE. Let $(x_1,
+          \dots, x_m)$ be the counts of $m$ categories with $\sum_i x_i = n$.
+          The MLE is the vector of observed frequencies, $\hat\pi_i = x_i/n$.
+          Any category that does not appear in the sample receives $\hat\pi_i =
+          0$.
+        </p>
+        <p>
+          A zero estimate is not only imprecise. If a later observation falls in
+          a category that was assigned probability zero, the likelihood of that
+          observation is zero and its negative log-likelihood is infinite. A
+          single unseen category therefore causes the model to assign zero
+          probability to any sequence that contains it. In language modeling
+          this corresponds to infinite perplexity from one unseen token.
+        </p>
+        <p>
+          MAP estimation removes the zero. With a $\text{Dirichlet}(\alpha)$
+          prior the posterior is $\text{Dirichlet}(x_i + \alpha_i)$, and the MAP
+          estimate is
+        </p>
+        $$ \hat\pi_i^{\text{MAP}} = \frac{x_i + \alpha_i - 1}{n + \sum_j
+        (\alpha_j - 1)}. $$
+        <p>
+          For $\alpha_i > 1$ this is strictly positive even when $x_i = 0$. The
+          symmetric choice $\alpha_i = 2$ gives $\hat\pi_i = (x_i + 1)/(n + m)$,
+          which is add-one (Laplace) smoothing. The prior assigns a small amount
+          of probability to categories that the sample has not produced.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/zero-count.png"
+            alt="Bar chart comparing MLE and MAP categorical probabilities, with one unseen category"
+          />
+          <figcaption>
+            Counts $(8, 5, 0, 3)$ over four categories. The MLE assigns
+            probability zero to the unseen category C; the add-one MAP estimate
+            assigns it positive probability.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">5.</span>Reparameterization</h3>
+        <p>
+          One property of the MLE does not carry over to MAP. A probability
+          density transforms with a Jacobian factor under a change of variables,
+          and the location of a mode is not preserved by that factor.
+          Consequently, if $\hat\theta_{\text{MAP}}$ is the MAP estimate of
+          $\theta$, then $g(\hat\theta_{\text{MAP}})$ is in general not the MAP
+          estimate of $g(\theta)$. The MLE depends on the likelihood rather than
+          on a density in $\theta$, so it does not depend on the choice of
+          parameterization.
+        </p>
+
+        <h3><span class="n">★</span>Summary</h3>
+        <table>
+          <tr>
+            <th>Aspect</th>
+            <th>MLE</th>
+            <th>MAP</th>
+          </tr>
+          <tr>
+            <td>Objective</td>
+            <td>maximize $\ell(\theta)$</td>
+            <td>maximize $\ell(\theta) + \log p(\theta)$</td>
+          </tr>
+          <tr>
+            <td>Prior</td>
+            <td>none</td>
+            <td>explicit prior $p(\theta)$</td>
+          </tr>
+          <tr>
+            <td>Regularization</td>
+            <td>none</td>
+            <td>
+              $-\log p(\theta)$; Gaussian gives $\ell_2$, Laplace gives $\ell_1$
+            </td>
+          </tr>
+          <tr>
+            <td>Large samples</td>
+            <td>limiting estimator</td>
+            <td>approaches MLE; difference of order $1/n$</td>
+          </tr>
+          <tr>
+            <td>Reparameterization</td>
+            <td>invariant</td>
+            <td>not invariant</td>
+          </tr>
+          <tr>
+            <td>Zero counts</td>
+            <td>assigns probability zero</td>
+            <td>assigns positive probability</td>
+          </tr>
+        </table>
+
+        <p class="muted">
+          The accompanying notebook contains numerical illustrations of these
+          results: the Bernoulli log-likelihood and its convergence, the
+          Beta-Bernoulli posterior, prior washout as $n$ grows, Gaussian
+          shrinkage, and the zero-count problem with its Dirichlet correction:
+          <a href="artifacts/experiments.ipynb">experiments.ipynb</a>.
+        </p>
+      </article>
+
+      <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
+    </div>
+  </body>
+</html>

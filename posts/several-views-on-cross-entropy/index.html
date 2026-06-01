@@ -53,9 +53,9 @@
           Cross-entropy is one of the central objectives used in machine
           learning, especially in classification. It is often introduced as a
           formula, but it has a direct probabilistic interpretation: it answers
-          the question, <em>how probable is the observed data under the
-          model?</em> A simple way to see this is to start with a Bernoulli
-          random variable.
+          the question,
+          <em>how probable is the observed data under the model?</em> A simple
+          way to see this is to start with a Bernoulli random variable.
         </p>
 
         <h3><span class="n">1.</span>Start with a Bernoulli variable</h3>
@@ -85,10 +85,9 @@
         </div>
         <p>
           This is the objective minimized by logistic regression, where the
-          Bernoulli parameter is produced by a sigmoid,
-          $\hat{y} = \sigma(w^\top x)$. Therefore, minimizing binary
-          cross-entropy is equivalent to maximum likelihood estimation for a
-          Bernoulli conditional model.
+          Bernoulli parameter is produced by a sigmoid, $\hat{y} = \sigma(w^\top
+          x)$. Therefore, minimizing binary cross-entropy is equivalent to
+          maximum likelihood estimation for a Bernoulli conditional model.
         </p>
 
         <h3><span class="n">2.</span>Why the logarithm appears</h3>
@@ -96,9 +95,9 @@
           The logarithm has two important roles. First, it transforms products
           of independent probabilities into sums, which are easier to optimize.
           Second, it assigns a large penalty to confident errors. If the model
-          assigns probability $0.9$ to the observed outcome, the loss is
-          $-\log 0.9 \approx 0.11$. If it assigns probability $0.01$ to the
-          observed outcome, the loss is $-\log 0.01 \approx 4.61$.
+          assigns probability $0.9$ to the observed outcome, the loss is $-\log
+          0.9 \approx 0.11$. If it assigns probability $0.01$ to the observed
+          outcome, the loss is $-\log 0.01 \approx 4.61$.
         </p>
 
         <figure>
@@ -117,8 +116,8 @@
           For a classification problem with more than two possible outcomes, the
           target is often represented by a one-hot vector $p$. This vector is
           equal to $1$ for the true class $y$ and $0$ for all other classes. The
-          general cross-entropy is a sum over all classes, but the one-hot target
-          leaves only the term corresponding to the observed class:
+          general cross-entropy is a sum over all classes, but the one-hot
+          target leaves only the term corresponding to the observed class:
         </p>
         $$ H(p, q) = -\sum_k p(k)\,\log q(k) = -\log q(y). $$
         <p>
@@ -153,8 +152,7 @@
           />
           <figcaption>
             For a Bernoulli distribution with $p=0.7$: cross-entropy equals the
-            entropy floor $H(p)$ plus the divergence
-            $D_{\mathrm{KL}}(p\|q)$.
+            entropy floor $H(p)$ plus the divergence $D_{\mathrm{KL}}(p\|q)$.
           </figcaption>
         </figure>
 
@@ -167,8 +165,8 @@
         q(x)]. $$
         <p>
           The first term is $-H(p)$, and the second term is $-H(p,q)$. Hence
-          $D_{\mathrm{KL}}(p\|q) = H(p,q) - H(p)$, or equivalently,
-          $H(p,q) = H(p) + D_{\mathrm{KL}}(p\|q)$.
+          $D_{\mathrm{KL}}(p\|q) = H(p,q) - H(p)$, or equivalently, $H(p,q) =
+          H(p) + D_{\mathrm{KL}}(p\|q)$.
         </p>
 
         <h3><span class="n">6.</span>Coding theory</h3>
@@ -184,24 +182,24 @@
 
         <h3><span class="n">7.</span>Proper scoring rule</h3>
         <p>
-          Cross-entropy is a proper scoring rule. In expectation, it is minimized
-          by reporting the true probabilities. If the true conditional
-          distribution is $p(y\mid x)$, the optimal prediction is
-          $q(y\mid x) = p(y\mid x)$. This distinguishes cross-entropy from
-          accuracy: accuracy evaluates only whether the most probable class is
-          correct, while cross-entropy also evaluates the probability assigned to
-          that class. A model that assigns probability $0.9$ should be correct
-          approximately $90\%$ of the time on such predictions.
+          Cross-entropy is a proper scoring rule. In expectation, it is
+          minimized by reporting the true probabilities. If the true conditional
+          distribution is $p(y\mid x)$, the optimal prediction is $q(y\mid x) =
+          p(y\mid x)$. This distinguishes cross-entropy from accuracy: accuracy
+          evaluates only whether the most probable class is correct, while
+          cross-entropy also evaluates the probability assigned to that class. A
+          model that assigns probability $0.9$ should be correct approximately
+          $90\%$ of the time on such predictions.
         </p>
 
         <h3><span class="n">8.</span>Empirical risk and the Bayesian view</h3>
         <p>
           In practice, the true distribution $p$ is unknown, and only a finite
           sample is observed. Replacing $p$ by the empirical distribution
-          $\hat{p}$ turns cross-entropy into the average negative
-          log-likelihood over the sample. This is maximum likelihood estimation.
-          If a prior $p(\theta)$ is added over the parameters, the objective
-          becomes maximum a posteriori estimation:
+          $\hat{p}$ turns cross-entropy into the average negative log-likelihood
+          over the sample. This is maximum likelihood estimation. If a prior
+          $p(\theta)$ is added over the parameters, the objective becomes
+          maximum a posteriori estimation:
         </p>
         $$ \theta_{\text{MAP}} = \arg\min_\theta \Big[-\sum_i \log p_\theta(x_i)
         - \log p(\theta)\Big]. $$
@@ -328,7 +326,9 @@
           </tr>
           <tr>
             <td>Coding theory</td>
-            <td>expected code length under a distribution chosen by the model</td>
+            <td>
+              expected code length under a distribution chosen by the model
+            </td>
           </tr>
           <tr>
             <td>Proper scoring</td>
@@ -336,7 +336,9 @@
           </tr>
           <tr>
             <td>Empirical / Bayesian</td>
-            <td>maximum likelihood on data; MAP estimation when a prior is added</td>
+            <td>
+              maximum likelihood on data; MAP estimation when a prior is added
+            </td>
           </tr>
           <tr>
             <td>Soft labels</td>
@@ -356,8 +358,8 @@
 
         <p class="muted">
           The accompanying notebook contains synthetic experiments for these
-          views: estimating a Bernoulli parameter, verifying the
-          $H(p) + D_{\mathrm{KL}}$ decomposition, applying temperature scaling,
+          views: estimating a Bernoulli parameter, verifying the $H(p) +
+          D_{\mathrm{KL}}$ decomposition, applying temperature scaling,
           comparing forward and reverse KL, and comparing optimization with MSE
           and cross-entropy:
           <a href="artifacts/experiments.ipynb">experiments.ipynb</a>.
