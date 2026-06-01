@@ -41,7 +41,8 @@
     <p>Cross-entropy is usually handed to you as a formula to memorize. It is friendlier
       than that. You don't have to invent it — it falls out of one simple question:
       <em>how probable is the data under my model?</em> The cleanest place to watch it
-      appear is a single coin.</p>
+      appear is a single coin. Everything after that is the same object seen from a
+      different angle.</p>
 
     <h3><span class="n">1.</span>Start with a coin</h3>
     <p>Take a biased coin that lands heads with probability $\hat{y}$. You flip it once
@@ -51,19 +52,16 @@
     <p>That looks fancier than it is: plug in $y=1$ and it reads $\hat{y}$; plug in $y=0$
       and it reads $1-\hat{y}$. It just picks out whichever probability matches the
       outcome.</p>
-
     <p>Now flip the coin $n$ times. Because the flips are independent, the probability of
       the whole sequence is the product of the per-flip probabilities. Products of many
       numbers below one get tiny and awkward, so we take a logarithm — which turns the
-      product into a sum — and flip the sign, so that <em>smaller means better</em>:</p>
+      product into a sum — and flip the sign, so that smaller means better:</p>
     $$ -\log P = -\sum_{i=1}^{n}\Big[\,y_i \log \hat{y}_i + (1-y_i)\log(1-\hat{y}_i)\,\Big]. $$
-
     <div class="callout">
       That expression <em>is</em> binary cross-entropy. We never defined a loss by hand —
       we wrote down the negative log-likelihood of a Bernoulli (coin) model, and
       cross-entropy was already there.
     </div>
-
     <p>This is exactly what logistic regression minimizes, with the coin's bias produced
       by a sigmoid, $\hat{y} = \sigma(w^\top x)$. So &ldquo;train with cross-entropy&rdquo;
       and &ldquo;do maximum likelihood on a Bernoulli model&rdquo; are the same sentence.</p>
@@ -88,7 +86,7 @@
     <p>Same instruction as the coin, now for a die: put as much probability as you can on
       the answer that actually occurred.</p>
 
-    <h3><span class="n">4.</span>One identity ties the rest together</h3>
+    <h3><span class="n">4.</span>The identity that ties everything together</h3>
     <p>Step back from samples to whole distributions and a tidy relationship appears:</p>
     <div class="callout">
       $$ H(p, q) \;=\; H(p) \;+\; D_{\mathrm{KL}}(p \,\|\, q). $$
@@ -96,27 +94,203 @@
     <p>Here $H(p)$ is the entropy of the data — the uncertainty you cannot remove — and
       $D_{\mathrm{KL}}(p\|q)$ is how far the model $q$ sits from the truth $p$. Since
       $H(p)$ has nothing to do with your parameters, minimizing cross-entropy is exactly
-      minimizing that distance. Everything below is just a different way of reading this
-      one line.</p>
+      minimizing that distance. The plot makes the split literal: the cross-entropy curve
+      is the flat entropy floor plus the KL gap, and both the loss and the gap bottom out
+      together at $q = p$.</p>
 
-    <h3><span class="n">5.</span>A few short lenses</h3>
-    <p><strong>Coding theory.</strong> $H(p)$ is the shortest average message length if you
-      knew the true distribution; $H(p,q)$ is the average length when you build your code
-      for $q$ but the world runs on $p$. The gap $D_{\mathrm{KL}}(p\|q)$ is the wasted
-      bits. So cross-entropy = unavoidable uncertainty + a penalty for using the wrong
-      model.</p>
+    <figure>
+      <img src="artifacts/ce-decomposition.png" alt="Cross-entropy decomposed into entropy plus KL divergence">
+      <figcaption>For a true Bernoulli $p=0.7$: cross-entropy = entropy floor $H(p)$ + divergence $D_{\mathrm{KL}}(p\|q)$.</figcaption>
+    </figure>
 
-    <p><strong>Proper scoring rule.</strong> Cross-entropy is minimized, in expectation,
-      only when you report the <em>true</em> probabilities — not just the right label.
-      That is why it is trained against instead of accuracy: accuracy looks only at the
-      top guess, while cross-entropy cares whether your $0.9$ really means $0.9$.</p>
+    <h3><span class="n">5.</span>The KL derivation, in three lines</h3>
+    <p>Where does that identity come from? Start from the definition of KL divergence and
+      split the logarithm:</p>
+    $$ D_{\mathrm{KL}}(p \,\|\, q)
+       = \mathbb{E}_p\!\left[\log \frac{p(x)}{q(x)}\right]
+       = \mathbb{E}_p[\log p(x)] - \mathbb{E}_p[\log q(x)]. $$
+    <p>The first term is $-H(p)$ and the second is $-H(p,q)$, so
+      $D_{\mathrm{KL}}(p\|q) = H(p,q) - H(p)$ — rearrange and you have the box above.</p>
 
-    <p><strong>Forward vs. reverse KL.</strong> Minimizing cross-entropy minimizes the
-      <em>forward</em> KL, $D_{\mathrm{KL}}(p\|q)$, which is heavily charged wherever the
-      data has mass but the model does not. That makes it <em>mode-covering</em>: it
-      spreads the model over every bump in $p$. The reverse direction is
-      <em>mode-seeking</em> and tends to collapse onto one bump — the distinction at the
-      heart of variational inference.</p>
+    <h3><span class="n">6.</span>Coding theory</h3>
+    <p>$H(p)$ is the shortest average message length if you knew the true distribution;
+      $H(p,q)$ is the average length when you build your code for $q$ but the world runs
+      on $p$. The gap $D_{\mathrm{KL}}(p\|q)$ is the wasted bits. So cross-entropy =
+      unavoidable uncertainty + a penalty for using the wrong model.</p>
+
+    <h3><span class="n">7.</span>Proper scoring rule</h3>
+    <p>Cross-entropy is minimized, in expectation, only when you report the <em>true</em>
+      probabilities — not just the right label. If the true conditional is $p(y\mid x)$,
+      the optimum is $q(y\mid x) = p(y\mid x)$. That is why it is trained against instead
+      of accuracy: accuracy looks only at the top guess, while cross-entropy cares whether
+      your $0.9$ really means $0.9$. (The companion notebook shows temperature scaling
+      lowering cross-entropy while accuracy stays perfectly flat.)</p>
+
+    <h3><span class="n">8.</span>Empirical risk and the Bayesian view</h3>
+    <p>In practice you don't know $p$; you have data. Replacing $p$ with the empirical
+      distribution $\hat{p}$ turns cross-entropy into the average negative log-likelihood
+      over your sample — which is maximum likelihood estimation, full stop. Add a prior
+      $p(\theta)$ and the same objective becomes MAP:</p>
+    $$ \theta_{\text{MAP}} = \arg\min_\theta \Big[-\sum_i \log p_\theta(x_i) - \log p(\theta)\Big]. $$
+    <p>The extra $-\log p(\theta)$ is regularization: an L2 penalty is exactly a Gaussian
+      prior on the weights. So weight decay and &ldquo;a prior belief that weights are
+      small&rdquo; are the same statement.</p>
+
+    <h3><span class="n">9.</span>Soft labels</h3>
+    <p>Targets don't have to be one-hot. When $p$ is a full distribution, cross-entropy
+      $-\sum_k p_k \log q_k$ compares the whole vectors, which is what label smoothing,
+      knowledge distillation, and multi-annotator labels rely on. If a teacher says
+      $p=(0.7,0.2,0.1)$ and the student predicts $q=(0.6,0.3,0.1)$, the loss grades the
+      entire distribution, not just the arg-max — which is why distillation matches soft
+      predictions rather than hard labels.</p>
+
+    <h3><span class="n">10.</span>Forward vs. reverse KL</h3>
+    <p>Minimizing cross-entropy minimizes the <em>forward</em> KL,
+      $D_{\mathrm{KL}}(p\|q)$, which is heavily charged wherever the data has mass but the
+      model does not. That makes it <em>mode-covering</em>: it spreads the model over every
+      bump in $p$. The reverse direction is <em>mode-seeking</em> and tends to collapse
+      onto one bump — the distinction at the heart of variational inference.</p>
+
+    <figure>
+      <img src="artifacts/forward-reverse-kl.png" alt="Forward versus reverse KL fitting a single Gaussian to a bimodal target">
+      <figcaption>One Gaussian fit to a two-bump target: forward KL stretches to cover both modes; reverse KL locks onto one.</figcaption>
+    </figure>
+
+    <h3><span class="n">11.</span>Why not just use MSE?</h3>
+    <p>If the coin story felt like a detour, here is the payoff. A tempting shortcut is to
+      treat the label as a number and minimize squared error $(\hat{y}-y)^2$. Why don't
+      we? First, be fair: it is <em>not</em> that MSE is meaningless here. The squared
+      error of a probability is the <strong>Brier score</strong>, and like cross-entropy
+      it is a proper scoring rule — minimized, in expectation, exactly at the true
+      probability. So both losses point at the right answer.</p>
+    <p>The problem is the <em>journey</em>, not the destination. Put a sigmoid in front,
+      $\hat{y}=\sigma(z)$, and compare the gradients with respect to the pre-activation
+      $z$ for a positive example:</p>
+    $$ \text{cross-entropy:}\;\; \frac{\partial L}{\partial z} = \sigma(z) - y,
+       \qquad
+       \text{squared error:}\;\; \frac{\partial L}{\partial z} = \big(\sigma(z)-y\big)\,\sigma(z)\big(1-\sigma(z)\big). $$
+    <p>Squared error carries an extra factor $\sigma'(z)=\sigma(z)(1-\sigma(z))$, and that
+      factor collapses to zero whenever the unit is saturated. So a neuron that is
+      <em>confidently wrong</em> ($y=1$ but $\sigma(z)\approx 0$) receives almost no
+      gradient under MSE — learning stalls precisely when it should be fastest.
+      Cross-entropy has no such factor: its gradient is $\approx 1$ in that regime. The
+      logarithm in cross-entropy exists exactly to cancel the $\sigma'$, because
+      cross-entropy is the Bernoulli likelihood and MSE is not.</p>
+
+    <figure>
+      <img src="artifacts/mse-vs-bce-gradient.png" alt="Gradient magnitude of cross-entropy versus squared error against pre-activation z">
+      <figcaption>For a confidently-wrong unit (shaded), cross-entropy's gradient stays near 1 while MSE's vanishes.</figcaption>
+    </figure>
+
+    <p>There is a second, related point of view: the penalty shape. Cross-entropy shoots
+      to infinity as you grow confident in the wrong answer, while squared error is capped
+      at $1$ — so MSE barely flinches at a disaster that cross-entropy treats as
+      catastrophic.</p>
+
+    <figure>
+      <img src="artifacts/mse-vs-bce-loss.png" alt="Loss versus predicted probability for cross-entropy and squared error">
+      <figcaption>For a positive example: cross-entropy diverges as $p\to0$; squared error tops out at $1$.</figcaption>
+    </figure>
+
+    <p>Slide the prediction yourself and watch both losses move. Flip the true label to
+      see the curves mirror:</p>
+
+    <div class="widget" id="lossExplorer">
+      <div class="controls">
+        <div class="group">true label y:
+          <button class="seg active" data-y="1">1</button>
+          <button class="seg" data-y="0">0</button>
+        </div>
+        <div class="group">predicted p = <b id="pval">0.50</b>
+          <input id="pslider" type="range" min="1" max="99" value="50">
+        </div>
+      </div>
+      <svg viewBox="0 0 460 250" xmlns="http://www.w3.org/2000/svg" aria-label="interactive loss comparison">
+        <!-- axes -->
+        <line class="w-axis" x1="44" y1="12" x2="44" y2="214"></line>
+        <line class="w-axis" x1="44" y1="214" x2="448" y2="214"></line>
+        <!-- y ticks -->
+        <text class="w-lbl" x="38" y="216" text-anchor="end">0</text>
+        <text class="w-lbl" x="38" y="16" text-anchor="end">4</text>
+        <!-- x ticks -->
+        <text class="w-lbl" x="44"  y="228" text-anchor="middle">0</text>
+        <text class="w-lbl" x="246" y="228" text-anchor="middle">0.5</text>
+        <text class="w-lbl" x="448" y="228" text-anchor="middle">1</text>
+        <text class="w-lbl" x="246" y="244" text-anchor="middle">predicted probability  p</text>
+        <!-- curves -->
+        <path id="bcePath" class="w-bce" d=""></path>
+        <path id="msePath" class="w-mse" d=""></path>
+        <!-- marker + dots -->
+        <line id="marker" class="w-marker" x1="246" y1="12" x2="246" y2="214"></line>
+        <circle id="dotBce" class="w-dot-bce" r="4" cx="246" cy="120"></circle>
+        <circle id="dotMse" class="w-dot-mse" r="4" cx="246" cy="120"></circle>
+      </svg>
+      <div class="readout">
+        <span class="bce">cross-entropy = <b id="bceval">0.69</b></span> ·
+        <span class="mse">squared error = <b id="mseval">0.25</b></span>
+        <span class="muted">&nbsp;(loss axis capped at 4)</span>
+      </div>
+    </div>
+    <script>
+    (function () {
+      var el = document.getElementById("lossExplorer");
+      if (!el) return;
+      var P_MIN = 0.01, P_MAX = 0.99, LMAX = 4;
+      var padL = 44, padT = 12, padR = 12, padB = 36, W = 460, H = 250;
+      var plotW = W - padL - padR, plotH = H - padT - padB;
+      var y = 1;
+      function xpix(p) { return padL + (p - P_MIN) / (P_MAX - P_MIN) * plotW; }
+      function ypix(l) { var lc = Math.min(l, LMAX); return padT + (1 - lc / LMAX) * plotH; }
+      function bce(p) { return y === 1 ? -Math.log(p) : -Math.log(1 - p); }
+      function mse(p) { return (p - y) * (p - y); }
+      function buildPath(fn) {
+        var d = "", n = 220;
+        for (var i = 0; i <= n; i++) {
+          var p = P_MIN + (P_MAX - P_MIN) * i / n;
+          d += (i === 0 ? "M" : "L") + xpix(p).toFixed(1) + " " + ypix(fn(p)).toFixed(1);
+        }
+        return d;
+      }
+      var bcePath = el.querySelector("#bcePath"),
+          msePath = el.querySelector("#msePath"),
+          marker  = el.querySelector("#marker"),
+          dotBce  = el.querySelector("#dotBce"),
+          dotMse  = el.querySelector("#dotMse"),
+          slider  = el.querySelector("#pslider"),
+          pOut    = el.querySelector("#pval"),
+          bceOut  = el.querySelector("#bceval"),
+          mseOut  = el.querySelector("#mseval"),
+          segs    = el.querySelectorAll(".seg");
+      function update() {
+        var p = parseInt(slider.value, 10) / 100;
+        pOut.textContent = p.toFixed(2);
+        var X = xpix(p);
+        marker.setAttribute("x1", X.toFixed(1));
+        marker.setAttribute("x2", X.toFixed(1));
+        dotBce.setAttribute("cx", X.toFixed(1));
+        dotBce.setAttribute("cy", ypix(bce(p)).toFixed(1));
+        dotMse.setAttribute("cx", X.toFixed(1));
+        dotMse.setAttribute("cy", ypix(mse(p)).toFixed(1));
+        bceOut.textContent = bce(p).toFixed(2);
+        mseOut.textContent = mse(p).toFixed(2);
+      }
+      function redraw() {
+        bcePath.setAttribute("d", buildPath(bce));
+        msePath.setAttribute("d", buildPath(mse));
+        update();
+      }
+      slider.addEventListener("input", update);
+      for (var i = 0; i < segs.length; i++) {
+        segs[i].addEventListener("click", function () {
+          y = parseInt(this.getAttribute("data-y"), 10);
+          for (var j = 0; j < segs.length; j++) segs[j].classList.remove("active");
+          this.classList.add("active");
+          redraw();
+        });
+      }
+      redraw();
+    })();
+    </script>
 
     <h3><span class="n">★</span>Summary</h3>
     <table>
@@ -126,15 +300,17 @@
       <tr><td>KL divergence</td><td>distance from the true distribution to the model</td></tr>
       <tr><td>Coding theory</td><td>wasted bits from coding with the wrong distribution</td></tr>
       <tr><td>Proper scoring</td><td>reward for honest, calibrated probabilities</td></tr>
+      <tr><td>Empirical / Bayesian</td><td>MLE on data; add a prior and it becomes MAP</td></tr>
+      <tr><td>Soft labels</td><td>compares full target and predicted distributions</td></tr>
       <tr><td>Forward KL</td><td>mode-covering fit of model to data</td></tr>
+      <tr><td>vs. MSE</td><td>same optimum, but MSE's gradient dies when confidently wrong</td></tr>
     </table>
 
-    <p class="muted">I worked these ideas into a small notebook of synthetic experiments —
-      recovering a coin's bias by maximum likelihood, checking the
-      $H(p) + D_{\mathrm{KL}}$ split numerically, watching temperature scaling fix
-      calibration while accuracy stays flat, and fitting a bimodal target to see
-      forward vs. reverse KL pull in different directions:
-      <a href="experiments.ipynb">experiments.ipynb</a>.</p>
+    <p class="muted">All of these are worked into a small notebook of synthetic
+      experiments — recovering a coin's bias, the $H(p) + D_{\mathrm{KL}}$ split,
+      temperature scaling, forward vs. reverse KL, and a head-to-head where MSE stalls for
+      hundreds of epochs while cross-entropy escapes a bad start at once:
+      <a href="artifacts/experiments.ipynb">experiments.ipynb</a>.</p>
   </article>
 
   <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
