@@ -43,14 +43,3 @@ Root-absolute paths need a server (opening the file directly won't resolve `/`):
 python -m http.server 8000
 # then open http://localhost:8000/
 ```
-
-## Deploy
-
-Push to the `main` branch of `mmkuznecov/mmkuznecov.github.io`. GitHub Pages
-serves it at https://mmkuznecov.github.io/ — no build, no Actions.
-
-## Notes
-
-- The JetBrains Mono font is loaded from Google Fonts, so the old local
-  `fonts/` directory and its broken `@font-face` are no longer needed.
-- The homepage photo was removed; the `images/` directory is no longer used.
