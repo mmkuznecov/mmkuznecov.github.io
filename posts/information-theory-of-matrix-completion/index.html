@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      The information theory of matrix completion — Mikhail Kuznetsov
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+          ],
+          throwOnError: false,
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav>
+        <a href="/">Home</a>
+        <a href="/posts/">Blog</a>
+        <a href="/cv/Working_CV.pdf">CV</a>
+      </nav>
+
+      <article class="post">
+        <h1>The information theory of matrix completion</h1>
+        <div class="meta">2026-06-02</div>
+
+        <p>
+          Matrix completion is the problem of reconstructing a $k \times n$
+          matrix from a subset of its entries. It appears in recommendation
+          systems, where a ratings matrix is mostly unobserved; in computer
+          vision, where missing pixels or measurements must be filled in; and in
+          many other settings where data is partially observed. The standard
+          approach assumes the matrix is low rank and recovers it by convex
+          optimization, with guarantees that carry a numerical constant and a
+          logarithmic factor.
+        </p>
+        <p>
+          Suh's 2014 paper takes a different route. Rather than fixing one
+          matrix and analyzing the worst case, it models the matrix as a
+          stochastic source observed through an erasure channel, and asks an
+          information-theoretic question: how many entries does a single
+          observation resolve, on average? The answer is a quantity called the
+          completion capacity, and it fixes the minimum number of observations
+          required for reliable reconstruction. This post explains that
+          framework, presents a computational implementation that verifies its
+          predictions, and develops several extensions. The implementation, the
+          report, and all figures are available in the
+          <a href="https://github.com/mmkuznecov/ITMatrixCompletion"
+            >project repository</a
+          >; the underlying paper is
+          <a href="https://arxiv.org/abs/1402.4225">arXiv:1402.4225</a>.
+        </p>
+
+        <h3><span class="n">1.</span>The completion capacity</h3>
+        <p>
+          Consider a matrix whose $n$ columns are independent and identically
+          distributed draws of a column law $(X_1, \dots, X_k)$, with each entry
+          revealed independently with probability $p$ and erased otherwise.
+          Suh's completion capacity for this i.i.d.-column model is
+        </p>
+        <div class="callout">
+          $$ C = \frac{\sum_{\ell=1}^{k} H(X_\ell)}{H(X_1, \dots, X_k)}, $$
+        </div>
+        <p>
+          the ratio of the summed marginal entropies of a single column to its
+          joint entropy. It is the average number of matrix entries that one
+          observation resolves. The minimum number of observed entries needed
+          for reliable reconstruction is $m = kn / C$, equivalently the erasure
+          channel must satisfy $p \ge 1/C$. All quantities are in bits.
+        </p>
+        <p>
+          The derivation is a counting argument. Over $n$ columns, an erasure
+          channel at rate $p$ delivers $\sum_\ell I(X_\ell; Y_\ell) = p\,nS$
+          bits, where $S = \sum_\ell H(X_\ell)$, and this must cover the
+          $n\,H(X_1, \dots, X_k)$ bits of source entropy; hence $p \ge 1/C$ and
+          $m \ge kn/C$. The achievability direction adapts the Slepian–Wolf
+          random-binning argument to the erasure setting.
+        </p>
+
+        <h3>
+          <span class="n">2.</span>Reading the capacity through redundancy
+        </h3>
+        <p>
+          A short rewrite makes the framework transparent. Define the total
+          correlation (multi-information)
+        </p>
+        $$ \mathrm{TC} = \sum_\ell H(X_\ell) - H(X_1, \dots, X_k) \ge 0, \qquad
+        \text{so} \qquad C = \frac{S}{S - \mathrm{TC}}. $$
+        <p>
+          The capacity is monotone increasing in the redundancy $\mathrm{TC}$.
+          With no redundancy ($\mathrm{TC} = 0$, independent rows) the capacity
+          is $C = 1$: one observation resolves exactly one entry. As the rows
+          become a deterministic function of a few of them, $\mathrm{TC} \to S$
+          and $C \to \infty$. The whole theory is an elaboration of this single
+          monotonicity. Everything that follows is a way of computing
+          $\mathrm{TC}$ for a particular matrix model.
+        </p>
+
+        <h3><span class="n">3.</span>Exact discrete cases</h3>
+        <p>
+          Four discrete column laws have closed-form capacities, each reproduced
+          to machine precision by the implementation.
+        </p>
+        <table>
+          <tr>
+            <th>Model</th>
+            <th>Column law</th>
+            <th>Capacity</th>
+          </tr>
+          <tr>
+            <td>Independent</td>
+            <td>$\prod_\ell p(x_\ell)$</td>
+            <td>$C = 1$</td>
+          </tr>
+          <tr>
+            <td>Identical rows</td>
+            <td>$X_1 = \dots = X_k$</td>
+            <td>$C = k$</td>
+          </tr>
+          <tr>
+            <td>Linear code</td>
+            <td>$X = Gu,\ u \sim \mathrm{Unif}(\mathrm{GF}(2)^r)$</td>
+            <td>$C = k/r$</td>
+          </tr>
+          <tr>
+            <td>Common bit + noise</td>
+            <td>$X_\ell = B \oplus Z_\ell,\ Z_\ell \sim \mathrm{Bern}(q)$</td>
+            <td>$k \to 1$ as $q: 0 \to \tfrac12$</td>
+          </tr>
+        </table>
+        <p>
+          The linear-code row is the discrete analogue of a rank-$r$ matrix. If
+          $G$ is $k \times r$ over $\mathrm{GF}(2)$ with full column rank and no
+          zero row, every marginal is uniform so $S = k$, while the column takes
+          $2^r$ equally likely values so $H(X_1, \dots, X_k) = r$; hence $C =
+          k/r$ and $m_{\min} = rn$, exactly the degrees-of-freedom count of a
+          rank-$r$ object.
+        </p>
+        <p>
+          The common-bit model is the instructive contrast. All rows share a
+          latent bit $B$, observed through independent $\mathrm{Bern}(q)$ noise.
+          The marginals stay uniform so $S = k$, and the capacity slides from
+          $k$ at $q = 0$ down to $1$ at $q = \tfrac12$. The redundancy here is
+          noisy: for any $q \in (0, \tfrac12)$ exact completion is impossible
+          even though $C > 1$, because the shared information is not a
+          deterministic function of the observations.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/common-bit.png"
+            alt="Common-bit capacity falling from k to 1 as noise increases"
+          />
+          <figcaption>
+            Common-bit model: $C$ falls smoothly from $k$ to $1$ as the
+            private-noise level $q$ grows. Dotted lines mark the noiseless value
+            $C = k$.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">4.</span>Gaussian and covariance models</h3>
+        <p>
+          For a Gaussian column $X \sim \mathcal{N}(0, \Sigma)$ the direct
+          plug-in into the capacity formula uses differential entropies, but
+          differential entropy is scale dependent and the ratio diverges as
+          $\det\Sigma \to 0$. The operational object quantizes each coordinate
+          to a grid of width $\Delta$. A principal direction with eigenvalue
+          $\lambda$ contributes $\max\!\big(0,\ \tfrac12\log_2(2\pi e \lambda) -
+          \log_2\Delta\big)$ bits, so directions whose spread $\sqrt{\lambda}$
+          falls below the resolution $\Delta$ are frozen and carry nothing. As
+          $\Delta \to 0$, a full-rank $\Sigma$ gives $C \to 1$, while an exactly
+          rank-$r$ $\Sigma$ gives $C \to k/r$.
+        </p>
+        <p>
+          Two structured covariances have closed-form log-determinants, verified
+          exactly: the equicorrelated matrix $\Sigma = (1-\rho)I +
+          \rho\mathbf{1}\mathbf{1}^\top$ and the Toeplitz AR(1) matrix
+          $\Sigma_{ij} = \rho^{|i-j|}$,
+        </p>
+        $$ \log_2\det\Sigma_{\text{equi}} = (k-1)\log_2(1-\rho) + \log_2\!\big(1
+        + (k-1)\rho\big), \qquad \log_2\det\Sigma_{\mathrm{AR}(1)} =
+        (k-1)\log_2(1-\rho^2). $$
+        <p>
+          At a fixed observation resolution, capacity rises with correlation.
+          The all-to-all equicorrelated coupling accrues redundancy faster than
+          the banded AR(1) coupling, which only couples nearby coordinates.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/equicorrelated.png"
+            alt="Equicorrelated Gaussian capacity rising toward k as correlation increases"
+          />
+          <figcaption>
+            Equicorrelated Gaussian at fixed resolution. $C \to 1$ as $\rho \to
+            0$ (independent), $C \to k$ as $\rho \to 1$ (rank one). Vertical
+            axis is logarithmic.
+          </figcaption>
+        </figure>
+        <figure>
+          <img
+            src="artifacts/ar1.png"
+            alt="AR(1) Gaussian capacity rising slowly with correlation"
+          />
+          <figcaption>
+            AR(1)/Toeplitz Gaussian. Banded correlation accrues redundancy more
+            slowly than the all-to-all case, since only neighboring coordinates
+            are strongly dependent.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">5.</span>The low-rank bridge</h3>
+        <p>
+          Combining the discrete and Gaussian pictures gives the central
+          observation. The binary-code capacity is $C = k/r$ exactly, so
+          $m_{\min} = rn$, the parameter count of a rank-$r$ factorization. The
+          quantized Gaussian capacity converges to $1$ for any full-rank
+          covariance but to $k/r$ for an exactly rank-$r$ one as the resolution
+          sharpens.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/rank-quantization.png"
+            alt="Left: binary code capacity k/r; right: quantized Gaussian capacity converging to 1 or k/r"
+          />
+          <figcaption>
+            (a) Binary linear code, $k = 12$: $C = k/r$ exactly. (b) Quantized
+            Gaussian, $k = 6$: as $\Delta \to 0$ (finer to the right), a
+            full-rank $\Sigma$ gives $C \to 1$ while a rank-$r$ $\Sigma$ gives
+            $C \to k/r$. The rank-1 curve's slow climb is the expected
+            logarithmic convergence.
+          </figcaption>
+        </figure>
+
+        <div class="callout">
+          For continuous entries, $C > 1$ requires exact functional dependence
+          among the rows, that is, a genuinely rank-deficient covariance.
+          Generic noise lifts every eigenvalue off zero, the matrix becomes full
+          rank, and $C \to 1$. The classical low-rank assumption of exact matrix
+          completion is recovered here as the only continuous regime in which
+          one observation resolves more than one entry.
+        </div>
+
+        <h3><span class="n">6.</span>Noisy observations</h3>
+        <p>
+          When each entry passes through a discrete memoryless channel before
+          the erasure, entropies become mutual informations, $C = \sum_\ell
+          I(X_\ell; Y_\ell) / H(X_1, \dots, X_k)$. For a rank-$r$ binary code
+          observed through a binary symmetric channel with crossover $\delta$,
+          each nonzero row contributes $1 - h(\delta)$ bits, where $h$ is the
+          binary entropy, giving the closed form $C = k(1 - h(\delta))/r$. At
+          $\delta = 0$ this recovers $k/r$; at $\delta = \tfrac12$ the
+          observation is pure noise and $C$ collapses to zero.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/noisy-bsc.png"
+            alt="Capacity of a rank-r code through a BSC degrading with crossover probability"
+          />
+          <figcaption>
+            A rank-$r$ code seen through a binary symmetric channel. Capacity
+            degrades by the channel factor $1 - h(\delta)$, scaling the
+            noiseless $C_0 = k/r$ to zero at $\delta = \tfrac12$.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">7.</span>Randomized ensembles</h3>
+        <p>
+          For a random matrix model, the capacity has a characteristic
+          distribution. Drawing a discrete joint law from a uniform Dirichlet
+          prior over $\{0,1\}^k$ shows that generic matrices are barely
+          compressible: the capacity concentrates just above $1$, because a
+          random joint has only weak dependence. Sharpening the Dirichlet
+          concentration places mass on fewer patterns, manufacturing redundancy
+          and a heavy right tail.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/random-ensembles.png"
+            alt="Histograms of capacity for random discrete joints, concentrating near 1"
+          />
+          <figcaption>
+            (a) Uniform-Dirichlet random joints: $C$ concentrates just above
+            $1$. (b) Sparser Dirichlet at $k = 4$ concentrates the law on fewer
+            patterns, raising $C$ and fattening the tail.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">8.</span>An operational decoder</h3>
+        <p>
+          The capacity is a statement about rates. To observe it directly, take
+          the rank-$r$ binary-code model literally: build a $k \times n$ matrix
+          whose columns are random codewords $X = Gu$, erase each entry with
+          probability $1 - p$, and decode every column by Gaussian elimination
+          over $\mathrm{GF}(2)$. A column is uniquely recoverable if and only if
+          its observed rows span the row space; a coordinate is determined if
+          and only if its generator row lies in that span. This lets the
+          experiment compute the expected symbol-error rate exactly, using only
+          integer-XOR row reduction.
+        </p>
+        <p>
+          The converse threshold is $p^\star = 1/C = r/k$. As $k$ grows at fixed
+          rate, the number of observed rows concentrates and the symbol-error
+          transition at $p^\star$ sharpens, which is the operational signature
+          of the capacity.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/symbol-error.png"
+            alt="Symbol-error rate versus observation rate, with the transition sharpening as k grows"
+          />
+          <figcaption>
+            Expected symbol-error rate versus observation rate $p$ at fixed rate
+            $r/k = \tfrac14$. The curves pivot at $p^\star = \tfrac14$: above
+            it, larger $k$ decays faster; below it, larger $k$ errs more.
+          </figcaption>
+        </figure>
+
+        <p>
+          There is a finite-size subtlety worth stating. The counting converse
+          ($m \ge kn/C$) is exact. Achievability at the capacity, however, has a
+          catch at fixed $k$: a single column observed below its information set
+          cannot be recovered, and for independent columns this happens with
+          probability $q(k, p) > 0$. The whole-matrix (block) error is then $1 -
+          (1-q)^n \to 1$ as $n \to \infty$. So exact reconstruction at rate
+          exactly $C$ is not achievable at fixed $k$; the per-column failure $q$
+          vanishes only as $k \to \infty$.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/block-vs-symbol.png"
+            alt="Block error rising to 1 with n; per-column failure vanishing with k above threshold"
+          />
+          <figcaption>
+            (a) At fixed $k$ and $p > p^\star$, block error climbs to $1$ as the
+            matrix widens. (b) The per-column non-recovery probability $q$
+            vanishes exponentially in $k$ above $p^\star$, stays bounded away
+            from $0$ and $1$ at $p^\star$, and saturates at $1$ below. The
+            exact-recovery threshold therefore concentrates to $1/C$ as $k \to
+            \infty$.
+          </figcaption>
+        </figure>
+
+        <p>
+          This does not contradict the capacity result. The framework
+          characterizes achievable rates, and the concentration in panel (b) is
+          what makes the rate $C$ meaningful in the high-dimensional regime. The
+          finite-$k$ gap is a statement about block versus symbol error,
+          structurally the same as the gap between block and bit decoding
+          thresholds in coding theory.
+        </p>
+
+        <h3><span class="n">9.</span>Capacity as a dimension count</h3>
+        <p>
+          The sections above treat structure living in the column law. To reach
+          matrices defined by a global algebraic constraint (symmetric,
+          Toeplitz, orthogonal), where the columns are not independent and the
+          capacity formula does not directly apply, it helps to recognize that
+          the capacity is, in the end, a ratio of dimensions,
+        </p>
+        <div class="callout">
+          $$ C = \frac{N_{\text{informative}}}{\dim\mathcal{F}}, $$ where
+          $N_{\text{informative}}$ is the number of entries not fixed a priori
+          and $\dim\mathcal{F}$ is the degrees of freedom of the family.
+        </div>
+        <p>
+          This is the high-resolution limit of the capacity formula, not a new
+          assumption. For a maximum-entropy model on a $d$-dimensional family
+          quantized at scale $\Delta$, the joint law occupies $d$ live
+          dimensions so $H_{\text{joint}} \approx d\log_2(1/\Delta)$, while the
+          $N$ informative marginals give $S \approx N\log_2(1/\Delta)$; the
+          $\log(1/\Delta)$ terms dominate and $C \to N/d$. A rank-$r$ matrix has
+          $\dim\mathcal{F} = r(k+n-r)$, so $C = kn / [r(k+n-r)] \to k/r$ as $n
+          \to \infty$, matching the column-law result.
+        </p>
+
+        <h3><span class="n">10.</span>The structure dichotomy</h3>
+        <p>
+          Reading off the degrees of freedom of each structured family is
+          elementary, and the resulting capacities split into two regimes.
+        </p>
+        <table>
+          <tr>
+            <th>Family</th>
+            <th>dof</th>
+            <th>capacity</th>
+            <th>large $k$</th>
+          </tr>
+          <tr>
+            <td>General / diagonal</td>
+            <td>$kn$ / $k$</td>
+            <td>$1$</td>
+            <td>$1$</td>
+          </tr>
+          <tr>
+            <td>Rank $r$</td>
+            <td>$r(k+n-r)$</td>
+            <td>$kn/[r(k+n-r)]$</td>
+            <td>$\to k/r$</td>
+          </tr>
+          <tr>
+            <td>Toeplitz / Hankel</td>
+            <td>$k+n-1$</td>
+            <td>$kn/(k+n-1)$</td>
+            <td>$\sim k/2$</td>
+          </tr>
+          <tr>
+            <td>Circulant</td>
+            <td>$k$</td>
+            <td>$k$</td>
+            <td>$k$</td>
+          </tr>
+          <tr>
+            <td>Symmetric</td>
+            <td>$\binom{k+1}{2}$</td>
+            <td>$2k/(k+1)$</td>
+            <td>$\to 2$</td>
+          </tr>
+          <tr>
+            <td>Skew-symmetric</td>
+            <td>$\binom{k}{2}$</td>
+            <td>$2$</td>
+            <td>$2$</td>
+          </tr>
+          <tr>
+            <td>Orthogonal $O(k)$</td>
+            <td>$\binom{k}{2}$</td>
+            <td>$2k/(k-1)$</td>
+            <td>$\to 2$</td>
+          </tr>
+        </table>
+
+        <figure>
+          <img
+            src="artifacts/dichotomy.png"
+            alt="Capacity versus matrix size: linear-redundancy families diverge, involutive families converge to 2"
+          />
+          <figcaption>
+            Completion capacity versus size for square families (logarithmic
+            axis). Linear-redundancy families (circulant, Toeplitz, low rank)
+            rise without bound; involutive families (orthogonal, symmetric)
+            converge to $C = 2$; general and diagonal sit at $C = 1$.
+          </figcaption>
+        </figure>
+
+        <div class="callout">
+          Linear-redundancy structures (rank, Toeplitz, circulant) let a few
+          generators reproduce the whole matrix, so $C$ grows without bound,
+          roughly linearly in $k$. Involution constraints (symmetric, skew,
+          orthogonal) only relate entries in pairs $(i,j) \leftrightarrow
+          (j,i)$, so they save one constant factor and $C \to 2$ regardless of
+          size.
+        </div>
+        <p>
+          The diagonal case is a useful warning. It has only $k$ degrees of
+          freedom yet $C = 1$, while the circulant also has $k$ degrees of
+          freedom but reaches $C = k$. The difference is coupling: every
+          circulant entry is a copy of one of the $k$ free numbers, so observing
+          anywhere helps everywhere, while the diagonal's live entries are
+          mutually uninformative. Few degrees of freedom raise capacity only
+          when the entries are coupled by them. There is also a separate
+          identifiability question: the bound $C = N/\dim\mathcal{F}$ is always
+          necessary, but whether $\dim\mathcal{F}$ generic observations
+          determine the matrix depends on the geometry. Sparse matrices are the
+          instructive failure: an unobserved entry is indistinguishable from a
+          structural zero, so the support is not identifiable from passive
+          sampling and the count is unreachable.
+        </p>
+
+        <h3>
+          <span class="n">11.</span>Stationary columns and spectral flatness
+        </h3>
+        <p>
+          For the most general stationary column, let the rows index time or
+          space and let each column be a draw of a stationary Gaussian process
+          with spectral density $f(\omega)$. The equicorrelated and AR(1)
+          covariances are particular spectra; the general invariant is the
+          spectral flatness (Wiener entropy)
+        </p>
+        $$ \gamma = \frac{\exp\!\big(\tfrac{1}{2\pi}\int_{-\pi}^{\pi}\log
+        f(\omega)\,d\omega\big)} {\tfrac{1}{2\pi}\int_{-\pi}^{\pi}
+        f(\omega)\,d\omega} = \frac{\text{geometric mean of }
+        f}{\text{arithmetic mean of } f} \in (0, 1], $$
+        <p>
+          in terms of which the per-coordinate redundancy converges, by the
+          Kolmogorov–Szegő limit, to $\mathrm{TC}_k / k \to
+          -\tfrac12\log_2\gamma$. White noise has a flat spectrum, $\gamma = 1$,
+          zero redundancy, $C = 1$; the more colored the process, the smaller
+          $\gamma$ and the larger $C$.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/spectral-flatness.png"
+            alt="Per-coordinate redundancy converging to the spectral-flatness limit for three processes"
+          />
+          <figcaption>
+            The redundancy rate $\mathrm{TC}_k/k$ computed from the $k \times k$
+            covariance converges to $-\tfrac12\log_2\gamma$ (dashed) for AR(1),
+            AR(2), and MA(1) processes.
+          </figcaption>
+        </figure>
+
+        <p>
+          This result is not really about stationarity; it is a statement about
+          the spread of the eigenvalues of any covariance, which is the
+          unification the extensions exploit.
+        </p>
+
+        <h3><span class="n">12.</span>Extensions</h3>
+        <p>
+          The framework admits several extensions. The first three below have
+          rigorous cores verified numerically; the fourth is stated as a
+          conjecture.
+        </p>
+
+        <p>
+          <strong>A rate–distortion capacity.</strong> The channel crossover
+          $\delta$, the quantization width $\Delta$, and the notion of
+          "approximately low rank" are one object. If one only needs to
+          reconstruct to average distortion $D$, the converse becomes $m \ge
+          kn/C(D)$ with $C(D) = S / R_X(D)$, where $R_X(D)$ is the
+          rate–distortion function of the column law. At $D = 0$ this recovers
+          the exact capacity; the noisy channel is one operating point on the
+          curve; and for a Gaussian, reverse water-filling makes $R_X(D)$ ignore
+          every eigenvalue below the water level. All three relaxations act by
+          freezing the small directions of the spectrum, under the common
+          identification $\nu = \Delta^2/(2\pi e)$ between resolution and water
+          level.
+        </p>
+
+        <p>
+          <strong>Capacity as an effective rank.</strong> The operational
+          consequence is that capacity measures an effective rank, not the
+          algebraic rank. With a variance floor $\nu$, define
+          $r_{\mathrm{eff}}(\nu) = \#\{\lambda_i > \nu\}$. The quantity
+          $k/C(\nu)$ tracks $r_{\mathrm{eff}}$ as a softened version, weighting
+          each surviving direction by $w_i(\nu) = \log_2(\lambda_i/\nu) /
+          \log_2(\bar\sigma^2_{\text{geo}}/\nu) \in (0,1]$; a direction barely
+          above threshold contributes near zero, a dominant direction near one.
+          Exact rank-$r$ is the special case where the soft count collapses to
+          the integer $r$.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/effective-rank.png"
+            alt="Capacity's soft dimension tracking the hard eigenvalue count as the tolerance varies"
+          />
+          <figcaption>
+            Capacity as a resolution-dependent effective rank. As the tolerance
+            $\nu$ crosses the eigenvalue clusters of a $24 \times 24$
+            covariance, the hard count $r_{\mathrm{eff}}(\nu)$ steps $24 \to 10
+            \to 4$ and the capacity's soft dimension $k/C(\nu)$ tracks it.
+          </figcaption>
+        </figure>
+
+        <p>
+          <strong>Optimal completion is a sparse precision matrix.</strong> For
+          covariance completion, among all positive-definite completions of an
+          observed pattern $\Omega$, the maximum-entropy one is the unique
+          completion whose inverse (precision matrix) is zero off $\Omega$. This
+          is Dempster's covariance selection: the KKT condition for maximizing
+          $\log\det\Sigma$ subject to the observed entries forces
+          $(\Sigma^{-1})_{ij} = 0$ for every unobserved $(i,j)$. The
+          log-determinant peaks exactly where the precision entry vanishes. A
+          positive-definite completion is guaranteed to exist if and only if the
+          observation graph is chordal, and for chordal patterns the entropy
+          decomposes over cliques and separators.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/dempster.png"
+            alt="Log-determinant of a covariance completion peaking where the precision entry crosses zero"
+          />
+          <figcaption>
+            Maximum-entropy completion equals sparse precision. Sweeping an
+            unobserved entry of a covariance completion, the log-determinant
+            (entropy) peaks precisely where the corresponding inverse entry
+            crosses zero.
+          </figcaption>
+        </figure>
+
+        <p>
+          <strong>A capacity calculus.</strong> Capacities compose: stacking two
+          independent column-blocks gives the entropy-weighted harmonic mean $C
+          = (S_1 + S_2) / (S_1/C_1 + S_2/C_2)$, so the least-compressible block
+          bottlenecks the whole. The block-versus-symbol gap of the operational
+          decoder is structurally the gap between block and bit decoding
+          thresholds in coding theory, where it is closed by spatial coupling.
+          The translation is a testable prediction: introducing slight
+          correlation between columns should close the gap and let exact
+          recovery reach the $1/C$ threshold even at small $k$. The proportional
+          regime $k, n \to \infty$ with $k/n \to c$, where a rank-$r$-plus-noise
+          matrix is a spiked random matrix governed by a Baik–Ben Arous–Péché
+          phase transition, remains the one direction stated only heuristically:
+          the observation fraction $p$ should dilute the signal-to-noise ratio
+          multiplicatively, but the constant is not pinned down by the
+          elementary argument.
+        </p>
+
+        <h3><span class="n">★</span>Summary</h3>
+        <p>
+          The completion capacity is the ratio of how large a matrix appears to
+          how large it really is: ambient dimension over intrinsic dimension. A
+          structure helps exactly insofar as it makes the entries a
+          low-dimensional function of few parameters. Independence and isotropy
+          give $C = 1$; exact low rank gives $C = k/r$ and is the only
+          continuous regime with $C > 1$; shift-invariant structure and
+          stationary color raise $C$ by an amount the spectral flatness
+          measures; involutive symmetries give a constant factor of two; and
+          sparsity, lacking functional coupling, gives a passive sampler
+          nothing.
+        </p>
+
+        <p class="muted">
+          The accompanying notebook reproduces the closed-form capacities of the
+          discrete and noisy models and the structured degrees-of-freedom
+          counts:
+          <a href="artifacts/experiments.ipynb">experiments.ipynb</a>. The full
+          implementation, the LaTeX report, and all figures are in the
+          <a href="https://github.com/mmkuznecov/ITMatrixCompletion"
+            >project repository</a
+          >.
+        </p>
+      </article>
+
+      <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
+    </div>
+  </body>
+</html>
