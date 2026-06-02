@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The many sides of PCA — Mikhail Kuznetsov</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+          ],
+          throwOnError: false,
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav>
+        <a href="/">Home</a>
+        <a href="/posts/">Blog</a>
+        <a href="/cv/Working_CV.pdf">CV</a>
+      </nav>
+
+      <article class="post">
+        <h1>The many sides of PCA</h1>
+        <div class="meta">2026-06-02</div>
+
+        <p>
+          Principal component analysis (PCA), introduced by Pearson in 1901 and
+          further developed by Hotelling, is among the oldest and most widely
+          used methods for dimensionality reduction and exploratory data
+          analysis. It is commonly employed as a preprocessing step in
+          multivariate analysis, pattern recognition, image processing, and many
+          other areas, and it forms the basis of numerous linear and nonlinear
+          techniques. Closely related formulations appear across disciplines
+          under different names, including the Karhunen–Loève transform in
+          signal processing, the Hotelling transform in statistics, proper
+          orthogonal decomposition in mechanical engineering, and the singular
+          value decomposition in linear algebra.
+        </p>
+        <p>
+          Given a dataset of $n$ points in $\mathbb{R}^p$, PCA produces a linear
+          map to a lower-dimensional space $\mathbb{R}^q$ with $q < p$. The map
+          is defined by a $q \times p$ matrix $W$ applied to the centered data,
+          $y_i = W(X_i - \bar X)$, and the new coordinates are called principal
+          components. What makes PCA worth studying is that the same
+          construction arises from several different criteria. This post states
+          five of them and shows that they lead to the same matrix.
+        </p>
+        <p class="muted">
+          This post is inspired by the Geometrical Methods of Machine Learning
+          course held at Skoltech by Alexander Bernstein.
+        </p>
+
+        <h3><span class="n">1.</span>Setup and notation</h3>
+        <p>
+          Let $\{X_1, \dots, X_n\}$ be the data, with each $X_i \in
+          \mathbb{R}^p$. The mean vector and centered observations are
+        </p>
+        $$ \bar X = \frac{1}{n}\sum_{i=1}^{n} X_i, \qquad \bar X_i = X_i - \bar
+        X. $$
+        <p>
+          Collect the centered observations as the columns of the $p \times n$
+          matrix $\bar{\mathbf X} = (\bar X_1, \dots, \bar X_n)$. The sample
+          covariance matrix is
+        </p>
+        $$ \Sigma = \frac{1}{n}\sum_{i=1}^{n}(X_i - \bar X)(X_i - \bar X)^\top =
+        \frac{1}{n}\,\bar{\mathbf X}\,\bar{\mathbf X}^\top. $$
+        <p>
+          This $p \times p$ matrix is symmetric and positive semidefinite. By
+          the spectral theorem it admits an orthonormal eigenbasis $e_1, \dots,
+          e_p$ with real eigenvalues, which we order as $\lambda_1 \ge \lambda_2
+          \ge \dots \ge \lambda_p \ge 0$, so that $\Sigma e_k = \lambda_k e_k$.
+          These eigenvectors are the principal axes. Each viewpoint below
+          arrives at the same conclusion: the optimal directions are the leading
+          eigenvectors of $\Sigma$.
+        </p>
+
+        <h3><span class="n">2.</span>Best linear approximation</h3>
+        <p>
+          The first viewpoint asks for the $q$-dimensional affine subspace that
+          lies closest to the data in mean squared distance. Parameterize such a
+          subspace as
+        </p>
+        $$ L(q) = \Big\{ X_0 + \sum_{k=1}^{q} t_k e_k : t \in \mathbb{R}^q
+        \Big\}, \qquad E = (e_1, \dots, e_q), \quad E^\top E = I_q, $$
+        <p>
+          a plane through a point $X_0$ spanned by orthonormal vectors. The
+          orthogonal projection of a point $X$ onto $L(q)$ is
+          $\mathrm{Pr}_{L(q)}(X) = X_0 + \sum_{k=1}^{q}\langle X - X_0,
+          e_k\rangle\, e_k$, and the objective is the mean squared distance to
+          that projection,
+        </p>
+        $$ J(L(q)) = \frac{1}{n}\sum_{i=1}^{n}\big\| X_i -
+        \mathrm{Pr}_{L(q)}(X_i)\big\|^2. $$
+        <p>
+          Taking $X_0 = \bar X$ is optimal, because for any choice of $E$ the
+          residual splits by the Pythagorean theorem into a part along the data
+          spread and a part orthogonal to the subspace,
+        </p>
+        $$ \big\| X_i - \mathrm{Pr}_{L(q)}(X_i)\big\|^2 = \big\| X_i - \bar X
+        \big\|^2 - \sum_{k=1}^{q}\langle X_i - \bar X, e_k\rangle^2. $$
+        <p>
+          The first term does not depend on $E$, so minimizing $J$ is equivalent
+          to maximizing the second sum. Writing $\langle X_i - \bar X,
+          e_k\rangle^2 = e_k^\top (X_i - \bar X)(X_i - \bar X)^\top e_k$ and
+          averaging over $i$,
+        </p>
+        $$ \Phi(E) = \frac{1}{n}\sum_{i=1}^{n}\sum_{k=1}^{q}\langle X_i - \bar
+        X, e_k\rangle^2 = \sum_{k=1}^{q} e_k^\top \Sigma\, e_k =
+        \mathrm{Tr}(E^\top \Sigma E). $$
+        <p>
+          The problem is therefore to maximize $\mathrm{Tr}(E^\top \Sigma E)$
+          subject to $E^\top E = I_q$.
+        </p>
+        <div class="callout">
+          $$ \max_{E^\top E = I_q}\ \mathrm{Tr}(E^\top \Sigma E) = \lambda_1 +
+          \dots + \lambda_q, $$ attained when the columns of $E$ are the
+          eigenvectors $e_1, \dots, e_q$ of $\Sigma$.
+        </div>
+        <p>
+          The constrained maximum can be derived directly with Lagrange
+          multipliers. For the first direction, maximizing $e_1^\top \Sigma e_1$
+          subject to $e_1^\top e_1 = 1$ gives the stationarity condition
+        </p>
+        $$ \nabla_{e_1}\Big[e_1^\top \Sigma e_1 + \lambda(1 - e_1^\top e_1)\Big]
+        = 2\Sigma e_1 - 2\lambda e_1 = 0 \;\;\Longrightarrow\;\; \Sigma e_1 =
+        \lambda e_1. $$
+        <p>
+          So $e_1$ is an eigenvector, and since $e_1^\top \Sigma e_1 = \lambda$,
+          the maximum is the largest eigenvalue $\lambda_1$. For the second
+          direction one adds the orthogonality constraint $e_2^\top e_1 = 0$;
+          the multiplier on that constraint turns out to be zero, the condition
+          again reduces to $\Sigma e_2 = \lambda e_2$, and the maximum over
+          directions orthogonal to $e_1$ is $\lambda_2$. Continuing in this way
+          yields $e_3, \dots, e_q$. The figure shows the case $q = 1$: the line
+          through the mean that minimizes the squared orthogonal distances. This
+          is not the regression line, which minimizes vertical distances.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/projection.png"
+            alt="Two-dimensional data projected orthogonally onto the first principal axis"
+          />
+          <figcaption>
+            The first principal axis minimizes the sum of squared orthogonal
+            distances from the points to the line. The orange segments are the
+            projection residuals.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">3.</span>Best linear dimensionality reduction</h3>
+        <p>
+          The second viewpoint asks for a linear map and a linear reconstruction
+          that together minimize the recovery error. An embedding $y_i = W(X_i -
+          \bar X)$ with a $q \times p$ matrix $W$ satisfying $WW^\top = I_q$ is
+          paired with a reconstruction $\hat X_i = \bar X + V y_i$ using a $p
+          \times q$ matrix $V$. For a fixed $W$, minimizing the squared error
+          over $V$ gives the Moore–Penrose solution $V = W^\top$, so the
+          reconstruction is the orthogonal projection
+        </p>
+        $$ \hat X_i = \bar X + W^\top W (X_i - \bar X) = \bar X + P\,(X_i - \bar
+        X), \qquad P = W^\top W, $$
+        <p>
+          where $P$ is the projection matrix onto the row space of $W$,
+          satisfying $P^\top = P$ and $P^2 = P$. Applying the Pythagorean
+          theorem to $X_i - \hat X_i = (I - P)(X_i - \bar X)$ and using
+          $\mathrm{Tr}(AA^\top) = \mathrm{Tr}(A^\top A)$,
+        </p>
+        $$ \varepsilon^2(W) = \frac{1}{n}\sum_{i=1}^{n}\big\| X_i - \hat X_i
+        \big\|^2 = \frac{1}{n}\sum_{i=1}^{n}\| X_i - \bar X\|^2 - \mathrm{Tr}(W
+        \Sigma W^\top). $$
+        <p>
+          The first term is fixed, so minimizing the error is the same as
+          maximizing $\mathrm{Tr}(W \Sigma W^\top)$. With $E = W^\top$ this is
+          exactly the problem of the previous section, and the optimal map is
+          again the matrix of leading eigenvectors, $W_{\text{PCA}} =
+          E_{\text{PCA}}^\top$. The reconstruction error from keeping $q$
+          components equals the sum of the discarded eigenvalues,
+        </p>
+        $$ \varepsilon^2(W_{\text{PCA}}) = \sum_{k=q+1}^{p}\lambda_k, $$
+        <p>
+          and the fraction of variance retained is $\big(\sum_{k\le
+          q}\lambda_k\big)\big/\big(\sum_{k}\lambda_k\big)$.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/reconstruction-error.png"
+            alt="Reconstruction error and retained variance as a function of the number of retained components"
+          />
+          <figcaption>
+            As more components are retained, the reconstruction error decreases
+            and the retained fraction of variance increases. The dotted line
+            marks the $0.95$ level.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">4.</span>Metric multidimensional scaling</h3>
+        <p>
+          The third viewpoint asks for low-dimensional coordinates that preserve
+          the pairwise Euclidean distances of the data. Let $\mathbf{D}_X$ and
+          $\mathbf{D}_Y$ be the $n \times n$ matrices of squared distances in
+          the original and reduced spaces. The objective is to preserve the
+          averaged pairwise distances,
+        </p>
+        $$ \mathrm{APD}(W) = \sum_{i,j=1}^{n}\Big(\| X_i - X_j\|^2 - \| y_i -
+        y_j\|^2\Big)^2 = \big\|\mathbf{D}_X - \mathbf{D}_Y\big\|_F^2. $$
+        <p>
+          Squared distances and centered inner products are related by $\| X_i -
+          X_j\|^2 = S_{ii} + S_{jj} - 2 S_{ij}$, where $S_{ij} = \langle X_i -
+          \bar X, X_j - \bar X\rangle$. Double-centering with $H = I_n -
+          \tfrac{1}{n}\mathbf{1}\mathbf{1}^\top$ removes the $S_{ii}$ and
+          $S_{jj}$ terms, giving $\mathbf{S}_X = -\tfrac{1}{2}H\mathbf{D}_X H$
+          and likewise for $Y$. The distance problem therefore reduces to
+          matching the Gram matrices,
+        </p>
+        $$ \big\|\mathbf{S}_X - \mathbf{S}_Y\big\|_F^2 = \big\| \bar{\mathbf
+        X}^\top \bar{\mathbf X} - Y^\top Y \big\|_F^2 \;\to\; \min. $$
+        <p>
+          The minimizer is the best rank-$q$ approximation of the Gram matrix
+          $\bar{\mathbf X}^\top \bar{\mathbf X}$, given by its leading
+          eigenvectors. Writing the singular value decomposition $\bar{\mathbf
+          X} = U_p \Lambda_p V_p^\top$, the $n \times n$ Gram matrix is
+          $\bar{\mathbf X}^\top \bar{\mathbf X} = V_p \Lambda_p^2 V_p^\top$, and
+          its best rank-$q$ approximation uses the first $q$ columns of $V_p$.
+          The resulting reduced coordinates coincide with the PCA features, so
+          $W_{\text{MDS}} = W_{\text{PCA}}$. The figure compares pairwise
+          distances before and after a two-dimensional projection of
+          three-dimensional data; they lie close to the identity line.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/mds-distances.png"
+            alt="Scatter plot of original versus projected pairwise distances lying near the identity line"
+          />
+          <figcaption>
+            Pairwise distances after a two-dimensional PCA projection of
+            three-dimensional data, plotted against the original distances.
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">5.</span>Maximum variance and decorrelation</h3>
+        <p>
+          The fourth viewpoint treats $X$ as a random vector with covariance
+          $\Sigma$ and looks for the direction of maximum variance. For a unit
+          vector $e$, the projected variable $Y_e = e^\top X$ has variance
+        </p>
+        $$ \mathrm{Var}(Y_e) = e^\top \Sigma\, e. $$
+        <p>
+          Expanding $e = \sum_k a_k e_k$ in the eigenbasis, with $\sum_k a_k^2 =
+          1$, gives $\mathrm{Var}(Y_e) = \sum_k a_k^2 \lambda_k$, a convex
+          combination of the eigenvalues. It is maximized by placing all weight
+          on the largest, that is $e = e_1$, with maximal variance $\lambda_1$.
+          The $k$-th direction is sought orthogonal to the previous ones and
+          recovers $e_k$ with variance $\lambda_k$. For zero-mean Gaussian data
+          this criterion is equivalent to maximizing the mutual information
+          between $X$ and its projection $Y = WX$, since for a deterministic
+          linear map $I(X, Y) = H(Y)$ and the Gaussian entropy $H(Y) =
+          \tfrac{1}{2}\log\big((2\pi e)^q \det(W\Sigma W^\top)\big)$ is
+          maximized by the leading eigenvectors.
+        </p>
+        <p>
+          The resulting coordinates have a further property: they are
+          uncorrelated. The covariance matrix of the projected data is
+          $E_{\text{PCA}}^\top \Sigma\, E_{\text{PCA}} =
+          \mathrm{diag}(\lambda_1, \dots, \lambda_q)$, which is diagonal. PCA
+          therefore rotates a set of correlated features into uncorrelated
+          features ordered by variance, and the total variance is preserved
+          component by component: $\tfrac{1}{n}\sum_i \| X_i - \bar X\|^2 =
+          \sum_{k=1}^{p}\lambda_k$.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/variance-directions.png"
+            alt="Principal axes drawn on correlated two-dimensional data, scaled by the standard deviation along each axis"
+          />
+          <figcaption>
+            The principal axes point along the directions of largest variance,
+            with lengths proportional to the standard deviation along each axis.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <img
+            src="artifacts/decorrelation.png"
+            alt="Correlated data on the left and the same data in uncorrelated PCA coordinates on the right"
+          />
+          <figcaption>
+            The same data in original coordinates (correlated) and in principal
+            coordinates (uncorrelated, ordered by variance).
+          </figcaption>
+        </figure>
+
+        <h3><span class="n">6.</span>Singular value decomposition</h3>
+        <p>
+          The fifth viewpoint is computational. Write the centered data matrix
+          in its singular value decomposition,
+        </p>
+        $$ \bar{\mathbf X} = U_p\, \Lambda_p\, V_p^\top, $$
+        <p>
+          where $U_p$ is $p \times p$ orthogonal, $V_p$ is $n \times p$ with
+          $V_p^\top V_p = I_p$, and $\Lambda_p$ is diagonal with the singular
+          values in descending order. Then
+        </p>
+        $$ \Sigma = \frac{1}{n}\,\bar{\mathbf X}\,\bar{\mathbf X}^\top =
+        \frac{1}{n}\, U_p \Lambda_p^2 U_p^\top, $$
+        <p>
+          so the columns of $U_p$ are the eigenvectors of $\Sigma$ and the
+          eigenvalues are $\lambda_k = \Lambda_{p,kk}^2 / n$. Keeping the first
+          $q$ columns, $\bar{\mathbf X} \approx U_q \Lambda_q V_q^\top$, gives
+          the same reduced features $Y_{i,q} = U_q^\top (X_i - \bar X)$ as the
+          previous viewpoints. This is the form used in practice, because the
+          SVD can be computed directly from the data matrix without forming
+          $\Sigma$, which is both faster and numerically more stable.
+        </p>
+
+        <h3><span class="n">7.</span>Choosing the number of components</h3>
+        <p>
+          Each viewpoint orders the components by an eigenvalue, so the
+          eigenvalue spectrum determines how many to keep. A scree plot shows
+          the eigenvalues in descending order. Two common rules are to retain
+          enough components to explain a fixed fraction $P$ of the total
+          variance,
+        </p>
+        $$ q(P) = \min\Big\{ q :
+        \frac{\sum_{k=1}^{q}\lambda_k}{\sum_{k=1}^{p}\lambda_k} \ge P\Big\},
+        \qquad P \approx 0.9 \text{ or } 0.95, $$
+        <p>
+          or to look for a point where the spectrum levels off, for example by
+          inspecting the gaps $\lambda_q - \lambda_{q+1}$.
+        </p>
+
+        <figure>
+          <img
+            src="artifacts/scree.png"
+            alt="Scree plot showing eigenvalues in descending order"
+          />
+          <figcaption>
+            A scree plot of the eigenvalue spectrum. Components beyond the point
+            where the values level off contribute little variance.
+          </figcaption>
+        </figure>
+
+        <p>
+          A component with a small eigenvalue has small variance: the
+          corresponding transformed feature is nearly constant across the data
+          and carries little information, so it can be removed. This is the
+          formal content of the eigenface example, where a high-dimensional
+          image is represented by its projection onto a small number of leading
+          components and then reconstructed.
+        </p>
+
+        <h3><span class="n">★</span>Summary</h3>
+        <table>
+          <tr>
+            <th>Viewpoint</th>
+            <th>Criterion</th>
+          </tr>
+          <tr>
+            <td>Best linear approximation</td>
+            <td>minimize squared distance to a subspace</td>
+          </tr>
+          <tr>
+            <td>Dimensionality reduction</td>
+            <td>minimize linear reconstruction error</td>
+          </tr>
+          <tr>
+            <td>Metric MDS</td>
+            <td>preserve pairwise Euclidean distances</td>
+          </tr>
+          <tr>
+            <td>Maximum variance</td>
+            <td>maximize variance of the projection; decorrelate</td>
+          </tr>
+          <tr>
+            <td>SVD</td>
+            <td>singular value decomposition of the centered data</td>
+          </tr>
+        </table>
+        <p>
+          All five reduce to the same problem: maximize $\mathrm{Tr}(E^\top
+          \Sigma E)$ over orthonormal $E$, whose solution is the leading
+          eigenvectors of the covariance matrix.
+        </p>
+
+        <p class="muted">
+          The accompanying notebook contains numerical illustrations of these
+          viewpoints: the eigendecomposition and projection, the equivalence
+          with the SVD, decorrelation of the projected coordinates, the
+          reconstruction error as the sum of discarded eigenvalues, and distance
+          preservation:
+          <a href="artifacts/experiments.ipynb">experiments.ipynb</a>.
+        </p>
+      </article>
+
+      <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
+    </div>
+  </body>
+</html>
