@@ -10,7 +10,11 @@
   border: 1px solid var(--line, #222a35);
   border-radius: 10px;
 }
-.demo-fallback { margin: 0; color: var(--muted, #8a94a3); font-size: 13px; }
+.demo-fallback {
+  margin: 0;
+  color: var(--muted, #8a94a3);
+  font-size: 13px;
+}
 
 .demo-head {
   margin-bottom: 10px;
@@ -20,17 +24,21 @@
   letter-spacing: 0.01em;
 }
 
-.demo-stagehost { width: 100%; }
+.demo-stagehost {
+  width: 100%;
+}
 .demo-canvas {
   display: block;
   width: 100%;
   border: 1px solid var(--line, #222a35);
   border-radius: 8px;
   background: var(--bg, #0e1116);
-  touch-action: none;          /* let the canvas own drags on touch devices */
+  touch-action: none; /* let the canvas own drags on touch devices */
   cursor: grab;
 }
-.demo-canvas:active { cursor: grabbing; }
+.demo-canvas:active {
+  cursor: grabbing;
+}
 
 .demo-controls {
   display: flex;
@@ -47,9 +55,21 @@
   flex: 1 1 160px;
   min-width: 150px;
 }
-.demo-srow { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted, #8a94a3); }
-.demo-sval { color: var(--accent, #4aa3ff); }
-.demo-slider input[type="range"] { width: 100%; height: 22px; accent-color: var(--accent, #4aa3ff); cursor: pointer; }
+.demo-srow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted, #8a94a3);
+}
+.demo-sval {
+  color: var(--accent, #4aa3ff);
+}
+.demo-slider input[type="range"] {
+  width: 100%;
+  height: 22px;
+  accent-color: var(--accent, #4aa3ff);
+  cursor: pointer;
+}
 
 .demo-btn {
   font: inherit;
@@ -61,29 +81,80 @@
   padding: 6px 12px;
   cursor: pointer;
 }
-.demo-btn:hover { border-color: var(--accent, #4aa3ff); color: var(--accent, #4aa3ff); }
-
-.demo-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted, #8a94a3); cursor: pointer; }
-.demo-check input { accent-color: var(--accent, #4aa3ff); }
-
-.demo-seg { display: inline-flex; border: 1px solid var(--line, #222a35); border-radius: 6px; overflow: hidden; }
-.demo-segbtn {
-  font: inherit; font-size: 13px; cursor: pointer;
-  color: var(--muted, #8a94a3); background: var(--bg, #0e1116);
-  border: none; padding: 6px 12px;
+.demo-btn:hover {
+  border-color: var(--accent, #4aa3ff);
+  color: var(--accent, #4aa3ff);
 }
-.demo-segbtn + .demo-segbtn { border-left: 1px solid var(--line, #222a35); }
-.demo-segbtn.on { color: var(--bg, #0e1116); background: var(--accent, #4aa3ff); }
 
-.demo-readout { margin-top: 10px; font-size: 12.5px; line-height: 1.55; color: var(--muted, #8a94a3); }
-.demo-readout b { color: var(--fg, #d7dde6); font-weight: 500; }
-.demo-readout .k { color: var(--accent, #4aa3ff); font-weight: 500; }
-.demo-readout .k2 { color: var(--accent2, #e0a458); font-weight: 500; }
-.demo-note { margin-top: 8px; font-size: 12px; }
+.demo-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted, #8a94a3);
+  cursor: pointer;
+}
+.demo-check input {
+  accent-color: var(--accent, #4aa3ff);
+}
 
-:focus-visible { outline: 2px solid var(--accent, #4aa3ff); outline-offset: 2px; }
+.demo-seg {
+  display: inline-flex;
+  border: 1px solid var(--line, #222a35);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.demo-segbtn {
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--muted, #8a94a3);
+  background: var(--bg, #0e1116);
+  border: none;
+  padding: 6px 12px;
+}
+.demo-segbtn + .demo-segbtn {
+  border-left: 1px solid var(--line, #222a35);
+}
+.demo-segbtn.on {
+  color: var(--bg, #0e1116);
+  background: var(--accent, #4aa3ff);
+}
+
+.demo-readout {
+  margin-top: 10px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted, #8a94a3);
+}
+.demo-readout b {
+  color: var(--fg, #d7dde6);
+  font-weight: 500;
+}
+.demo-readout .k {
+  color: var(--accent, #4aa3ff);
+  font-weight: 500;
+}
+.demo-readout .k2 {
+  color: var(--accent2, #e0a458);
+  font-weight: 500;
+}
+.demo-note {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent, #4aa3ff);
+  outline-offset: 2px;
+}
 
 @media (max-width: 560px) {
-  .demo-controls { gap: 10px 12px; }
-  .demo-slider { flex-basis: 130px; min-width: 120px; }
+  .demo-controls {
+    gap: 10px 12px;
+  }
+  .demo-slider {
+    flex-basis: 130px;
+    min-width: 120px;
+  }
 }

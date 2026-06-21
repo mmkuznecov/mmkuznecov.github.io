@@ -9,5 +9,9 @@
     "check": "node build.mjs --check",
     "test": "node build.mjs && node test.mjs",
     "dev": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.4"
   }
 }

@@ -3,7 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>The Fisher information matrix and the Hessian — Mikhail Kuznetsov</title>
+    <title>
+      The Fisher information matrix and the Hessian — Mikhail Kuznetsov
+    </title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -45,13 +47,18 @@
         --accent: #4aa3ff;
         --accent2: #e0a458;
       }
-      * { box-sizing: border-box; }
-      html { scroll-behavior: smooth; }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
       body {
         margin: 0;
         background: var(--bg);
         color: var(--fg);
-        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-family:
+          "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
         font-weight: 300;
         line-height: 1.72;
         font-size: 16px;
@@ -75,9 +82,16 @@
         text-decoration: none;
         letter-spacing: 0.02em;
       }
-      nav a:hover { color: var(--accent); }
-      a { color: var(--accent); text-decoration: none; }
-      a:hover { text-decoration: underline; }
+      nav a:hover {
+        color: var(--accent);
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
       h1 {
         font-weight: 500;
         font-size: 30px;
@@ -85,7 +99,11 @@
         margin: 8px 0 6px;
         letter-spacing: -0.01em;
       }
-      .meta { color: var(--muted); font-size: 13px; margin-bottom: 30px; }
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 30px;
+      }
       h3 {
         font-weight: 500;
         font-size: 19px;
@@ -101,10 +119,21 @@
         font-size: 15px;
         min-width: 22px;
       }
-      p { margin: 14px 0; color: #c6cdd8; }
-      em { color: var(--fg); font-style: italic; }
-      strong { color: var(--fg); font-weight: 700; }
-      .lead { color: var(--fg); }
+      p {
+        margin: 14px 0;
+        color: #c6cdd8;
+      }
+      em {
+        color: var(--fg);
+        font-style: italic;
+      }
+      strong {
+        color: var(--fg);
+        font-weight: 700;
+      }
+      .lead {
+        color: var(--fg);
+      }
       .callout {
         background: var(--panel);
         border: 1px solid var(--line);
@@ -140,15 +169,25 @@
         margin: 24px 0;
         font-size: 14px;
       }
-      th, td {
+      th,
+      td {
         text-align: left;
         padding: 9px 12px;
         border-bottom: 1px solid var(--line);
         vertical-align: top;
       }
-      th { color: var(--accent2); font-weight: 500; border-bottom: 1px solid var(--line); }
-      td:first-child { color: var(--fg); }
-      .muted { color: var(--muted); font-size: 14px; }
+      th {
+        color: var(--accent2);
+        font-weight: 500;
+        border-bottom: 1px solid var(--line);
+      }
+      td:first-child {
+        color: var(--fg);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+      }
       footer {
         margin-top: 56px;
         padding-top: 22px;
@@ -156,9 +195,18 @@
         color: var(--muted);
         font-size: 13px;
       }
-      .katex { font-size: 1.02em; }
-      .katex-display { margin: 18px 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
-      ::selection { background: rgba(74,163,255,0.28); }
+      .katex {
+        font-size: 1.02em;
+      }
+      .katex-display {
+        margin: 18px 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 2px 0;
+      }
+      ::selection {
+        background: rgba(74, 163, 255, 0.28);
+      }
     </style>
     <link rel="stylesheet" href="/assets/demos.css" />
   </head>
@@ -175,13 +223,14 @@
         <div class="meta">2026-06-18</div>
 
         <p class="lead">
-          The Fisher information matrix turns up in three different conversations that rarely
-          mention each other: in statistics it is the precision of the best possible estimate,
-          in information geometry it is the metric that measures distance between distributions,
-          and in machine learning it is the curvature object behind natural-gradient and
-          second-order optimizers. All three are the same matrix, and the cleanest way to see
-          why is to start from the one place it is most concrete: the second derivative — the
-          Hessian — of a log-likelihood.
+          The Fisher information matrix turns up in three different
+          conversations that rarely mention each other: in statistics it is the
+          precision of the best possible estimate, in information geometry it is
+          the metric that measures distance between distributions, and in
+          machine learning it is the curvature object behind natural-gradient
+          and second-order optimizers. All three are the same matrix, and the
+          cleanest way to see why is to start from the one place it is most
+          concrete: the second derivative — the Hessian — of a log-likelihood.
         </p>
 
         <h3><span class="n">1.</span>The score and its two moments</h3>
@@ -191,22 +240,26 @@
         </p>
         $$ s(\theta;x) = \nabla_\theta \log p_\theta(x). $$
         <p>
-          Differentiating the normalization $\int p_\theta(x)\,dx = 1$ under the integral sign
-          gives $\int \nabla_\theta p_\theta = \nabla_\theta 1 = 0$, and since $\nabla_\theta
-          p_\theta = p_\theta\,s$, the score has mean zero: $\mathbb E_{p_\theta}[s]=0$. Its
-          covariance is the Fisher information matrix. Differentiating once more produces a
-          second expression, and the two agree:
+          Differentiating the normalization $\int p_\theta(x)\,dx = 1$ under the
+          integral sign gives $\int \nabla_\theta p_\theta = \nabla_\theta 1 =
+          0$, and since $\nabla_\theta p_\theta = p_\theta\,s$, the score has
+          mean zero: $\mathbb E_{p_\theta}[s]=0$. Its covariance is the Fisher
+          information matrix. Differentiating once more produces a second
+          expression, and the two agree:
         </p>
         <div class="callout">
-          $$ I(\theta)\;=\;\mathbb E\!\big[s\,s^\top\big]\;=\;-\,\mathbb E\!\big[\nabla^2_\theta \log p_\theta(x)\big]. $$
+          $$ I(\theta)\;=\;\mathbb E\!\big[s\,s^\top\big]\;=\;-\,\mathbb
+          E\!\big[\nabla^2_\theta \log p_\theta(x)\big]. $$
         </div>
         <p>
-          The left form is the <em>variance of the score</em>. The right form is the
-          <em>negative expected Hessian</em> of the log-likelihood — the average curvature. The
-          identity holds because $\nabla^2\log p = \nabla^2 p / p - s\,s^\top$ and the first
-          term integrates to $\nabla^2\!\int p_\theta = 0$. This is the whole subject in one
-          line: a variance and a curvature that happen to be the same matrix. Both forms are
-          verified against the closed-form information for four standard models below.
+          The left form is the <em>variance of the score</em>. The right form is
+          the <em>negative expected Hessian</em> of the log-likelihood — the
+          average curvature. The identity holds because $\nabla^2\log p =
+          \nabla^2 p / p - s\,s^\top$ and the first term integrates to
+          $\nabla^2\!\int p_\theta = 0$. This is the whole subject in one line:
+          a variance and a curvature that happen to be the same matrix. Both
+          forms are verified against the closed-form information for four
+          standard models below.
         </p>
 
         <figure>
@@ -215,33 +268,40 @@
             alt="Two Monte-Carlo estimators of the Fisher information converging to the closed-form value for the Poisson model"
           />
           <figcaption>
-            For the Poisson model, both Monte-Carlo estimators — the score-variance form
-            $\mathbb E[s^2]$ and the negative-Hessian form $-\mathbb E[\partial^2\log p]$ —
-            converge to the same closed-form value $1/\lambda$.
+            For the Poisson model, both Monte-Carlo estimators — the
+            score-variance form $\mathbb E[s^2]$ and the negative-Hessian form
+            $-\mathbb E[\partial^2\log p]$ — converge to the same closed-form
+            value $1/\lambda$.
           </figcaption>
         </figure>
 
         <h3><span class="n">2.</span>Curvature at the maximum</h3>
         <p>
-          The right-hand form invites a picture. Stop taking expectations and evaluate the
-          negative Hessian of the log-likelihood <em>at the observed data</em>, at the maximum
-          likelihood estimate $\hat\theta$. This is the
-          <em>observed information</em> $J_n(\hat\theta) = -\nabla^2 \ell_n(\hat\theta)$, where
-          $\ell_n$ is the total log-likelihood. Near the peak, where the gradient vanishes, the
-          log-likelihood is a downward parabola:
+          The right-hand form invites a picture. Stop taking expectations and
+          evaluate the negative Hessian of the log-likelihood
+          <em>at the observed data</em>, at the maximum likelihood estimate
+          $\hat\theta$. This is the
+          <em>observed information</em> $J_n(\hat\theta) = -\nabla^2
+          \ell_n(\hat\theta)$, where $\ell_n$ is the total log-likelihood. Near
+          the peak, where the gradient vanishes, the log-likelihood is a
+          downward parabola:
         </p>
         <div class="callout">
-          $$ \ell_n(\theta)\;\approx\;\ell_n(\hat\theta)\;-\;\tfrac12\,(\theta-\hat\theta)^\top J_n(\hat\theta)\,(\theta-\hat\theta). $$
+          $$
+          \ell_n(\theta)\;\approx\;\ell_n(\hat\theta)\;-\;\tfrac12\,(\theta-\hat\theta)^\top
+          J_n(\hat\theta)\,(\theta-\hat\theta). $$
         </div>
         <p>
-          A curve's curvature at a flat apex equals the magnitude of its second derivative, so
-          the <em>osculating circle</em> at the peak has radius $r = 1/J_n$. The geometry now
-          reads directly. A model that carries little information about $\theta$ has a flat,
-          wide log-likelihood — large radius, broad peak, and an estimate that could have come
-          out almost anywhere. A model rich in information has a sharp spike — small radius,
-          and the estimate is pinned down. The observed information, divided by $n$, converges
-          to the expected information $I_1(\theta^\star)$ by the law of large numbers, so the
-          data's curvature is a consistent estimate of the model's.
+          A curve's curvature at a flat apex equals the magnitude of its second
+          derivative, so the <em>osculating circle</em> at the peak has radius
+          $r = 1/J_n$. The geometry now reads directly. A model that carries
+          little information about $\theta$ has a flat, wide log-likelihood —
+          large radius, broad peak, and an estimate that could have come out
+          almost anywhere. A model rich in information has a sharp spike — small
+          radius, and the estimate is pinned down. The observed information,
+          divided by $n$, converges to the expected information
+          $I_1(\theta^\star)$ by the law of large numbers, so the data's
+          curvature is a consistent estimate of the model's.
         </p>
 
         <figure>
@@ -250,10 +310,11 @@
             alt="Log-likelihood of an exponential model with its second-order Taylor parabola and osculating circle, at two sample sizes"
           />
           <figcaption>
-            The log-likelihood of an exponential model at two sample sizes, with its
-            second-order Taylor parabola and the osculating circle of radius $1/J$. Small
-            information ($n=6$): a flat peak, a large circle, a high-variance estimate. Large
-            information ($n=60$): a sharp peak, a small circle, a precise estimate.
+            The log-likelihood of an exponential model at two sample sizes, with
+            its second-order Taylor parabola and the osculating circle of radius
+            $1/J$. Small information ($n=6$): a flat peak, a large circle, a
+            high-variance estimate. Large information ($n=60$): a sharp peak, a
+            small circle, a precise estimate.
           </figcaption>
         </figure>
 
@@ -264,23 +325,26 @@
         <h3><span class="n">3.</span>The inverse is a covariance</h3>
         <p>
           Why care about the curvature? Because its inverse is a variance. The
-          <em>Cramér–Rao bound</em> states that no unbiased estimator can have smaller
-          covariance than the inverse information,
+          <em>Cramér–Rao bound</em> states that no unbiased estimator can have
+          smaller covariance than the inverse information,
         </p>
-        $$ \operatorname{Cov}(\hat\theta)\;\succeq\;I_n(\theta)^{-1} \;=\; \tfrac1n\,I_1(\theta)^{-1}, $$
+        $$ \operatorname{Cov}(\hat\theta)\;\succeq\;I_n(\theta)^{-1} \;=\;
+        \tfrac1n\,I_1(\theta)^{-1}, $$
         <p>
-          and the maximum likelihood estimator attains it in the limit. Expanding the score
-          equation around $\theta^\star$ and applying the central limit theorem to the score
-          gives the asymptotic law
+          and the maximum likelihood estimator attains it in the limit.
+          Expanding the score equation around $\theta^\star$ and applying the
+          central limit theorem to the score gives the asymptotic law
         </p>
         <div class="callout">
-          $$ \sqrt{n}\,\big(\hat\theta_n-\theta^\star\big)\ \xrightarrow{\ d\ }\ \mathcal N\!\big(0,\;I_1(\theta^\star)^{-1}\big). $$
+          $$ \sqrt{n}\,\big(\hat\theta_n-\theta^\star\big)\ \xrightarrow{\ d\ }\
+          \mathcal N\!\big(0,\;I_1(\theta^\star)^{-1}\big). $$
         </div>
         <p>
-          The inverse Fisher information is, quite literally, the covariance of the estimate.
-          This closes the loop with the previous section: the curvature of the peak governs the
-          variance of where the peak lands. The reciprocal relationship — high curvature, low
-          variance — is the content of the two pictures above.
+          The inverse Fisher information is, quite literally, the covariance of
+          the estimate. This closes the loop with the previous section: the
+          curvature of the peak governs the variance of where the peak lands.
+          The reciprocal relationship — high curvature, low variance — is the
+          content of the two pictures above.
         </p>
 
         <figure>
@@ -289,30 +353,37 @@
             alt="Empirical variance of the Poisson MLE tracking the Cramér–Rao floor, and the asymptotic normal distribution of the rescaled error"
           />
           <figcaption>
-            Poisson MLE. Left: the empirical variance of $\hat\lambda$ tracks the Cramér–Rao
-            floor $1/(nI_1)$ across sample sizes. Right: the rescaled error
-            $\sqrt n(\hat\lambda-\lambda)$ is normal with variance $I_1^{-1}$.
+            Poisson MLE. Left: the empirical variance of $\hat\lambda$ tracks
+            the Cramér–Rao floor $1/(nI_1)$ across sample sizes. Right: the
+            rescaled error $\sqrt n(\hat\lambda-\lambda)$ is normal with
+            variance $I_1^{-1}$.
           </figcaption>
         </figure>
 
         <h3><span class="n">4.</span>The Hessian of the KL divergence</h3>
         <p>
-          So far $I$ has been the curvature of the log-likelihood. It is also the curvature of
-          something model-independent: the Kullback–Leibler divergence to a nearby distribution.
-          Expanding $D_{\mathrm{KL}}(p_\theta \,\|\, p_{\theta+\delta})$ in $\delta$, the
-          constant term is zero, the linear term vanishes because KL is minimized at
-          $\delta = 0$, and the quadratic term is exactly the Fisher matrix:
+          So far $I$ has been the curvature of the log-likelihood. It is also
+          the curvature of something model-independent: the Kullback–Leibler
+          divergence to a nearby distribution. Expanding
+          $D_{\mathrm{KL}}(p_\theta \,\|\, p_{\theta+\delta})$ in $\delta$, the
+          constant term is zero, the linear term vanishes because KL is
+          minimized at $\delta = 0$, and the quadratic term is exactly the
+          Fisher matrix:
         </p>
         <div class="callout">
-          $$ D_{\mathrm{KL}}\!\big(p_\theta \,\|\, p_{\theta+\delta}\big)\;=\;\tfrac12\,\delta^\top I(\theta)\,\delta \;+\; O(\|\delta\|^3). $$
+          $$ D_{\mathrm{KL}}\!\big(p_\theta \,\|\,
+          p_{\theta+\delta}\big)\;=\;\tfrac12\,\delta^\top I(\theta)\,\delta
+          \;+\; O(\|\delta\|^3). $$
         </div>
         <p>
-          This is the statement that promotes the Fisher information from a statistical quantity
-          to a geometric one. It is the unique Riemannian metric on a statistical model invariant
-          under reparameterization (Čencov's theorem), and it is the object on which information
-          geometry is built — see Nielsen's elementary introduction to the subject. Distance on a
-          model is not measured in parameter units; it is measured in how distinguishable the
-          distributions are, and the Fisher matrix is the local conversion factor.
+          This is the statement that promotes the Fisher information from a
+          statistical quantity to a geometric one. It is the unique Riemannian
+          metric on a statistical model invariant under reparameterization
+          (Čencov's theorem), and it is the object on which information geometry
+          is built — see Nielsen's elementary introduction to the subject.
+          Distance on a model is not measured in parameter units; it is measured
+          in how distinguishable the distributions are, and the Fisher matrix is
+          the local conversion factor.
         </p>
 
         <figure>
@@ -321,28 +392,32 @@
             alt="Bernoulli KL divergence against its Fisher quadratic, and Gaussian KL contours against the Fisher ellipses, agreeing near the origin"
           />
           <figcaption>
-            Left: the Bernoulli KL against its quadratic $\tfrac12 I(p)\delta^2$. Right: for
-            $\mathcal N(\mu,\sigma^2)$, exact KL contours (solid) and the Fisher ellipses
-            $\tfrac12\delta^\top I\delta=c$ (dashed) coincide near the origin — the information
+            Left: the Bernoulli KL against its quadratic $\tfrac12
+            I(p)\delta^2$. Right: for $\mathcal N(\mu,\sigma^2)$, exact KL
+            contours (solid) and the Fisher ellipses $\tfrac12\delta^\top
+            I\delta=c$ (dashed) coincide near the origin — the information
             matrix is the local shape of KL.
           </figcaption>
         </figure>
 
         <h3><span class="n">5.</span>The matrix case</h3>
         <p>
-          With more than one parameter the information is a genuine matrix, and its off-diagonal
-          structure carries meaning. For the Gaussian $\mathcal N(\mu,\sigma^2)$ with both
-          parameters unknown,
+          With more than one parameter the information is a genuine matrix, and
+          its off-diagonal structure carries meaning. For the Gaussian $\mathcal
+          N(\mu,\sigma^2)$ with both parameters unknown,
         </p>
-        $$ I(\mu,\sigma^2)=\begin{pmatrix} 1/\sigma^2 & 0 \\[3pt] 0 & 1/(2\sigma^4)\end{pmatrix}. $$
+        $$ I(\mu,\sigma^2)=\begin{pmatrix} 1/\sigma^2 & 0 \\[3pt] 0 &
+        1/(2\sigma^4)\end{pmatrix}. $$
         <p>
-          The zero off-diagonal says $\mu$ and $\sigma^2$ are <em>orthogonal parameters</em>:
-          their maximum likelihood estimators are asymptotically uncorrelated, so the confidence
-          region is an axis-aligned ellipse, not a tilted one. The inverse, $I^{-1}/n =
-          \operatorname{diag}(\sigma^2/n,\,2\sigma^4/n)$, reproduces the familiar variances of
-          the sample mean and the variance estimator. The information matrix and its negative-
-          Hessian twin are confirmed by Monte Carlo, and the inverse predicts the spread of the
-          estimates exactly.
+          The zero off-diagonal says $\mu$ and $\sigma^2$ are
+          <em>orthogonal parameters</em>: their maximum likelihood estimators
+          are asymptotically uncorrelated, so the confidence region is an
+          axis-aligned ellipse, not a tilted one. The inverse, $I^{-1}/n =
+          \operatorname{diag}(\sigma^2/n,\,2\sigma^4/n)$, reproduces the
+          familiar variances of the sample mean and the variance estimator. The
+          information matrix and its negative- Hessian twin are confirmed by
+          Monte Carlo, and the inverse predicts the spread of the estimates
+          exactly.
         </p>
 
         <figure>
@@ -351,31 +426,34 @@
             alt="Scatter of maximum likelihood estimates of the Gaussian mean and variance with the 95 percent confidence ellipse from the inverse Fisher information"
           />
           <figcaption>
-            Maximum likelihood estimates $(\hat\mu,\hat\sigma^2)$ over many datasets, with the
-            $95\%$ ellipse from $I^{-1}/n$. The cloud is axis-aligned, the signature of the zero
-            off-diagonal, and the ellipse hugs it.
+            Maximum likelihood estimates $(\hat\mu,\hat\sigma^2)$ over many
+            datasets, with the $95\%$ ellipse from $I^{-1}/n$. The cloud is
+            axis-aligned, the signature of the zero off-diagonal, and the
+            ellipse hugs it.
           </figcaption>
         </figure>
 
         <h3><span class="n">6.</span>A tensor, not a number</h3>
         <p>
-          A subtlety the single-parameter pictures hide: the information is not attached to "the
-          parameter" but to the <em>distribution</em>. Reparameterize $\phi = \phi(\theta)$ with
-          Jacobian $J = \partial\theta/\partial\phi$, and the score transforms by $J^\top$, so the
-          information transforms as a metric tensor:
+          A subtlety the single-parameter pictures hide: the information is not
+          attached to "the parameter" but to the <em>distribution</em>.
+          Reparameterize $\phi = \phi(\theta)$ with Jacobian $J =
+          \partial\theta/\partial\phi$, and the score transforms by $J^\top$, so
+          the information transforms as a metric tensor:
         </p>
-        <div class="callout">
-          $$ I_\phi \;=\; J^\top I_\theta\, J. $$
-        </div>
+        <div class="callout">$$ I_\phi \;=\; J^\top I_\theta\, J. $$</div>
         <p>
-          For Bernoulli, $I(p)=1/(p(1-p))$ explodes at the edges $p\to 0,1$; in the natural
-          parameter $\eta=\log\frac{p}{1-p}$ it becomes the tame $I(\eta)=p(1-p)$. Same model,
-          different coordinates, different numbers. The payoff is the <em>natural gradient</em>
-          $I^{-1}\nabla L$: under the tensor law the ordinary-gradient direction depends on the
-          chosen coordinates, but the natural-gradient step induces the <em>same</em> change in
-          the distribution regardless of parameterization. It is the steepest-descent direction
-          measured in KL rather than in parameter distance, which is why it underlies
-          natural-gradient methods and their practical approximations such as K-FAC.
+          For Bernoulli, $I(p)=1/(p(1-p))$ explodes at the edges $p\to 0,1$; in
+          the natural parameter $\eta=\log\frac{p}{1-p}$ it becomes the tame
+          $I(\eta)=p(1-p)$. Same model, different coordinates, different
+          numbers. The payoff is the <em>natural gradient</em> $I^{-1}\nabla L$:
+          under the tensor law the ordinary-gradient direction depends on the
+          chosen coordinates, but the natural-gradient step induces the
+          <em>same</em> change in the distribution regardless of
+          parameterization. It is the steepest-descent direction measured in KL
+          rather than in parameter distance, which is why it underlies
+          natural-gradient methods and their practical approximations such as
+          K-FAC.
         </p>
 
         <figure>
@@ -384,31 +462,39 @@
             alt="Bernoulli Fisher information in two coordinate systems: divergent at the edges in the natural-probability coordinate and bounded in the logit coordinate"
           />
           <figcaption>
-            The Bernoulli Fisher information in two coordinates: $I(p)=1/(p(1-p))$ diverges at
-            the edges, while $I(\eta)=p(1-p)$ in the natural parameter is bounded. The two are
-            related by $I_\eta = (dp/d\eta)^2 I_p$, the scalar case of $I_\phi=J^\top I_\theta J$.
+            The Bernoulli Fisher information in two coordinates:
+            $I(p)=1/(p(1-p))$ diverges at the edges, while $I(\eta)=p(1-p)$ in
+            the natural parameter is bounded. The two are related by $I_\eta =
+            (dp/d\eta)^2 I_p$, the scalar case of $I_\phi=J^\top I_\theta J$.
           </figcaption>
         </figure>
 
         <h3><span class="n">7.</span>The Hessian in machine learning</h3>
         <p>
-          Training a model by minimizing a negative log-likelihood loss makes the connection
-          operational. For logistic regression the Hessian of the loss is
-          $X^\top\!\operatorname{diag}\!\big(\sigma_i(1-\sigma_i)\big)X$, which is exactly the
-          conditional Fisher information — the model is linear in its parameters, so there is no
-          residual term and the Hessian is positive semidefinite for free. For a
-          <em>nonlinear</em> model $f_\theta$ the Hessian of the squared-error loss splits in
-          two,
+          Training a model by minimizing a negative log-likelihood loss makes
+          the connection operational. For logistic regression the Hessian of the
+          loss is
+          $X^\top\!\operatorname{diag}\!\big(\sigma_i(1-\sigma_i)\big)X$, which
+          is exactly the conditional Fisher information — the model is linear in
+          its parameters, so there is no residual term and the Hessian is
+          positive semidefinite for free. For a
+          <em>nonlinear</em> model $f_\theta$ the Hessian of the squared-error
+          loss splits in two,
         </p>
-        $$ \nabla^2 L \;=\; \underbrace{\tfrac1{\sigma^2}\textstyle\sum_i \nabla f_i\,\nabla f_i^\top}_{\text{Fisher / Gauss–Newton}} \;-\; \underbrace{\tfrac1{\sigma^2}\textstyle\sum_i r_i\,\nabla^2 f_i}_{\text{residual term}}, $$
+        $$ \nabla^2 L \;=\; \underbrace{\tfrac1{\sigma^2}\textstyle\sum_i \nabla
+        f_i\,\nabla f_i^\top}_{\text{Fisher / Gauss–Newton}} \;-\;
+        \underbrace{\tfrac1{\sigma^2}\textstyle\sum_i r_i\,\nabla^2
+        f_i}_{\text{residual term}}, $$
         <p>
-          where $r_i = y_i - f_\theta(x_i)$ are the residuals. The first piece is the
-          Gauss–Newton matrix, which for an NLL loss is the Fisher information. The second piece
-          is weighted by the residuals, which have mean zero under the model, so as training
-          drives the fit toward the data the residual term averages away and the Hessian collapses
-          onto the Fisher matrix. This is why the Fisher / Gauss–Newton matrix is the standard
-          curvature surrogate: it is positive semidefinite by construction, it requires only first
-          derivatives of the model, and near a good optimum it is the Hessian.
+          where $r_i = y_i - f_\theta(x_i)$ are the residuals. The first piece
+          is the Gauss–Newton matrix, which for an NLL loss is the Fisher
+          information. The second piece is weighted by the residuals, which have
+          mean zero under the model, so as training drives the fit toward the
+          data the residual term averages away and the Hessian collapses onto
+          the Fisher matrix. This is why the Fisher / Gauss–Newton matrix is the
+          standard curvature surrogate: it is positive semidefinite by
+          construction, it requires only first derivatives of the model, and
+          near a good optimum it is the Hessian.
         </p>
 
         <figure>
@@ -417,9 +503,10 @@
             alt="Relative gap between the full Hessian and the Gauss–Newton matrix collapsing as the training loss of a nonlinear regression falls"
           />
           <figcaption>
-            A nonlinear regression fit by Gauss–Newton steps. As the training loss falls to its
-            noise floor, the relative gap between the full Hessian and the Fisher / Gauss–Newton
-            matrix collapses — the residual term vanishes and $\nabla^2 L \to I$.
+            A nonlinear regression fit by Gauss–Newton steps. As the training
+            loss falls to its noise floor, the relative gap between the full
+            Hessian and the Fisher / Gauss–Newton matrix collapses — the
+            residual term vanishes and $\nabla^2 L \to I$.
           </figcaption>
         </figure>
 
@@ -443,35 +530,46 @@
           </tr>
           <tr>
             <td>Cramér–Rao / asymptotics</td>
-            <td>$I^{-1}$ is the variance floor and the MLE's asymptotic covariance</td>
+            <td>
+              $I^{-1}$ is the variance floor and the MLE's asymptotic covariance
+            </td>
           </tr>
           <tr>
             <td>Information geometry</td>
-            <td>the Hessian of KL; the invariant metric on a statistical model</td>
+            <td>
+              the Hessian of KL; the invariant metric on a statistical model
+            </td>
           </tr>
           <tr>
             <td>Reparameterization</td>
-            <td>a tensor, $I_\phi = J^\top I_\theta J$; makes the natural gradient coordinate-free</td>
+            <td>
+              a tensor, $I_\phi = J^\top I_\theta J$; makes the natural gradient
+              coordinate-free
+            </td>
           </tr>
           <tr>
             <td>Machine learning</td>
-            <td>the Gauss–Newton matrix; the loss Hessian minus a zero-mean residual term</td>
+            <td>
+              the Gauss–Newton matrix; the loss Hessian minus a zero-mean
+              residual term
+            </td>
           </tr>
         </table>
 
         <p class="muted">
-          The accompanying notebook reproduces every claim here: the equality of the two forms
-          for four models, the curvature picture and its osculating circles, the Cramér–Rao bound
-          and asymptotic normality, the KL-Hessian identity in one and two dimensions, the
-          $2\times2$ Gaussian information matrix and its confidence ellipse, the reparameterization
-          tensor law with natural-gradient invariance, and the Gauss–Newton decomposition of a
-          nonlinear-regression Hessian:
+          The accompanying notebook reproduces every claim here: the equality of
+          the two forms for four models, the curvature picture and its
+          osculating circles, the Cramér–Rao bound and asymptotic normality, the
+          KL-Hessian identity in one and two dimensions, the $2\times2$ Gaussian
+          information matrix and its confidence ellipse, the reparameterization
+          tensor law with natural-gradient invariance, and the Gauss–Newton
+          decomposition of a nonlinear-regression Hessian:
           <a href="artifacts/experiments.ipynb">experiments.ipynb</a>.
         </p>
       </article>
 
       <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
     </div>
-    <script defer src="demo.js"></script>
+    <script defer src="demo/demo.js"></script>
   </body>
 </html>
