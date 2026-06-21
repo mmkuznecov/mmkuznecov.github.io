@@ -1,0 +1,29 @@
+{
+  "generated": "2026-06-21T13:55:11.870Z",
+  "posts": [
+    {
+      "slug": "fisher-information-matrix-and-the-hessian",
+      "demos": [
+        "fisher-curvature-live"
+      ]
+    },
+    {
+      "slug": "information-theory-of-matrix-completion",
+      "demos": [
+        "completion-capacity"
+      ]
+    },
+    {
+      "slug": "many-sides-of-pca",
+      "demos": [
+        "pca-cloud"
+      ]
+    },
+    {
+      "slug": "mle-and-map",
+      "demos": [
+        "beta-bernoulli-live"
+      ]
+    }
+  ]
+}

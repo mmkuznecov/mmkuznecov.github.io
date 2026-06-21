@@ -160,6 +160,7 @@
       .katex-display { margin: 18px 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
       ::selection { background: rgba(74,163,255,0.28); }
     </style>
+    <link rel="stylesheet" href="/assets/demos.css" />
   </head>
   <body>
     <div class="wrap">
@@ -255,6 +256,10 @@
             information ($n=60$): a sharp peak, a small circle, a precise estimate.
           </figcaption>
         </figure>
+
+        <div class="demo" data-demo="fisher-curvature-live">
+          <p class="demo-fallback">Interactive demo — needs JavaScript.</p>
+        </div>
 
         <h3><span class="n">3.</span>The inverse is a covariance</h3>
         <p>
@@ -467,5 +472,6 @@
 
       <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
     </div>
+    <script defer src="demo.js"></script>
   </body>
 </html>

@@ -17,6 +17,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
     />
+    <link rel="stylesheet" href="/assets/demos.css" />
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
@@ -141,6 +142,10 @@
             The MLE, MAP mode, and posterior mean differ at finite $n$.
           </figcaption>
         </figure>
+
+        <div class="demo" data-demo="beta-bernoulli-live">
+          <p class="demo-fallback">Interactive demo — needs JavaScript.</p>
+        </div>
 
         <p>
           With a uniform prior ($\alpha=\beta=1$) the penalty term is constant
@@ -300,5 +305,6 @@
 
       <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
     </div>
+    <script defer src="demo.js"></script>
   </body>
 </html>

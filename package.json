@@ -1,0 +1,13 @@
+{
+  "name": "mmkuznecov-site-demos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Build/test tooling for the interactive post demos. No runtime dependencies.",
+  "scripts": {
+    "build": "node build.mjs",
+    "check": "node build.mjs --check",
+    "test": "node build.mjs && node test.mjs",
+    "dev": "python3 -m http.server 8000"
+  }
+}
