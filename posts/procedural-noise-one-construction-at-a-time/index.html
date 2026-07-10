@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Procedural noise, one construction at a time — Mikhail Kuznetsov</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
+    <link rel="stylesheet" href="/assets/demos.css" />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    ></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+          ],
+          throwOnError: false,
+        });
+      });
+    </script>
+    <style>
+      :root {
+        --bg: #0e1116;
+        --panel: #151a21;
+        --line: #222a35;
+        --fg: #d7dde6;
+        --muted: #8a94a3;
+        --accent: #4aa3ff;
+        --accent2: #e0a458;
+        --green: #2a9d8f;
+        --red: #d1495b;
+        --purple: #c792ea;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-weight: 300;
+        line-height: 1.72;
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 790px;
+        margin: 0 auto;
+        padding: 38px 22px 90px;
+      }
+      nav {
+        display: flex;
+        gap: 22px;
+        padding-bottom: 26px;
+        margin-bottom: 30px;
+        border-bottom: 1px solid var(--line);
+        font-size: 14px;
+      }
+      nav a { color: var(--muted); text-decoration: none; letter-spacing: 0.02em; }
+      nav a:hover { color: var(--accent); }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      h1 {
+        font-weight: 500;
+        font-size: 32px;
+        line-height: 1.24;
+        margin: 8px 0 8px;
+        letter-spacing: -0.02em;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.6;
+        margin: 0 0 12px;
+      }
+      .meta { color: var(--muted); font-size: 13px; margin-bottom: 30px; }
+      h2 {
+        font-weight: 500;
+        font-size: 22px;
+        line-height: 1.35;
+        margin: 58px 0 15px;
+        padding-top: 5px;
+        color: var(--fg);
+      }
+      h2 .n {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 15px;
+        margin-right: 10px;
+      }
+      h3 {
+        font-weight: 500;
+        font-size: 18px;
+        margin: 34px 0 10px;
+        color: var(--fg);
+      }
+      p { margin: 14px 0; color: #c6cdd8; }
+      em { color: var(--fg); }
+      strong { color: var(--fg); font-weight: 700; }
+      .lead { color: var(--fg); font-size: 17px; line-height: 1.76; }
+      .callout {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        border-radius: 7px;
+        padding: 10px 20px;
+        margin: 24px 0;
+        color: var(--fg);
+      }
+      .callout.secondary { border-left-color: var(--accent2); }
+      .toc {
+        margin: 28px 0 34px;
+        padding: 18px 20px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .toc-title {
+        color: var(--accent2);
+        font-size: 13px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
+      .toc-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 5px 22px;
+        font-size: 14px;
+      }
+      .toc-grid a { color: #b8c1ce; }
+      .taxonomy {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 22px 0;
+      }
+      .taxon {
+        padding: 15px 16px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .taxon b { display: block; margin-bottom: 5px; color: var(--accent2); font-size: 14px; }
+      .taxon span { color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .method-card {
+        margin: 18px 0 28px;
+        padding: 18px 20px;
+        background: linear-gradient(180deg, rgba(21,26,33,0.95), rgba(18,22,28,0.95));
+        border: 1px solid var(--line);
+        border-radius: 9px;
+      }
+      .method-card h3 { margin-top: 0; }
+      .method-meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .method-meta div {
+        border-top: 1px solid var(--line);
+        padding-top: 9px;
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.5;
+      }
+      .method-meta span {
+        display: block;
+        color: var(--accent2);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 3px;
+      }
+      figure { margin: 32px 0; text-align: center; }
+      figure.wide {
+        width: min(1160px, calc(100vw - 32px));
+        margin-left: 50%;
+        transform: translateX(-50%);
+      }
+      figure img {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        display: block;
+        margin: 0 auto;
+      }
+      figcaption {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+        margin-top: 12px;
+        text-align: left;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 24px 0;
+        font-size: 14px;
+      }
+      th, td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th { color: var(--accent2); font-weight: 500; }
+      td:first-child { color: var(--fg); }
+      details.snippet {
+        margin: 15px 0 5px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        overflow: hidden;
+      }
+      details.snippet summary {
+        cursor: pointer;
+        padding: 9px 13px;
+        color: var(--muted);
+        font-size: 12.5px;
+        background: rgba(14, 17, 22, 0.55);
+      }
+      pre {
+        margin: 0;
+        padding: 15px 16px;
+        overflow-x: auto;
+        background: #0b0e13;
+        border-top: 1px solid var(--line);
+        font-size: 12.5px;
+        line-height: 1.55;
+      }
+      code { color: #c9d3df; font-family: inherit; }
+      .equation-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: -5px;
+      }
+      .demo { width: min(980px, calc(100vw - 32px)); margin-left: 50%; transform: translateX(-50%); }
+      .noise-raster { image-rendering: auto; cursor: default; }
+      .noise-raster:active { cursor: default; }
+      .selection-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 24px 0;
+      }
+      .selection-grid div {
+        padding: 15px 16px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .selection-grid b { display: block; margin-bottom: 5px; }
+      .muted { color: var(--muted); font-size: 14px; }
+      footer {
+        margin-top: 58px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .katex { font-size: 1.02em; }
+      .katex-display { margin: 19px 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+      ::selection { background: rgba(74, 163, 255, 0.28); }
+      @media (max-width: 720px) {
+        figure.wide, .demo { width: 100%; margin-left: 0; transform: none; }
+        .taxonomy, .toc-grid, .selection-grid { grid-template-columns: 1fr; }
+        .method-meta { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav>
+        <a href="/">Home</a>
+        <a href="/posts/">Blog</a>
+        <a href="/cv/Working_CV.pdf">CV</a>
+      </nav>
+
+      <article class="post">
+        <h1>Procedural noise, one construction at a time</h1>
+        <p class="subtitle">
+          A practical review of value, gradient, cellular, spectral, phase,
+          wavelet, fractal, and warped noise.
+        </p>
+        <div class="meta">2026-07-11 · interactive figures · companion notebook</div>
+
+        <p class="lead">
+          Procedural noise is not one algorithm with many brand names. It is a
+          collection of ways to turn deterministic pseudo-random coefficients
+          into a field that can be evaluated at arbitrary coordinates. The
+          methods differ in what they randomize, how far each random primitive
+          reaches, and what the output means. Those differences matter more than
+          the usual question of which picture looks most “natural”.
+        </p>
+        <p>
+          This note reviews the constructions used in the accompanying noise
+          library. Each method gets a short mechanism, its characteristic
+          strengths and failure modes, and a small interactive experiment. The
+          taxonomy is kept deliberately small; the main goal is to understand
+          the methods individually and then see how octave sums and domain
+          warping change them.
+        </p>
+
+        <div class="toc">
+          <div class="toc-title">Contents</div>
+          <div class="toc-grid">
+            <a href="#taxonomy">0. A compact taxonomy</a>
+            <a href="#lattice">1. Value and gradient lattices</a>
+            <a href="#cellular">2. Cellular / Worley noise</a>
+            <a href="#spectral">3. Gabor, phasor, and wave noise</a>
+            <a href="#wavelet">4. Wavelet noise</a>
+            <a href="#octaves">5. fBm, ridged, and billow</a>
+            <a href="#warping">6. Domain warping</a>
+            <a href="#selection">7. Selection guide</a>
+          </div>
+        </div>
+
+        <h2 id="taxonomy"><span class="n">0.</span>A taxonomy small enough to use</h2>
+        <p>
+          A useful first question is: <em>what random primitive is placed in
+          space, and how does it influence nearby points?</em> That produces four
+          practical families and separates them from later composition steps.
+        </p>
+        <div class="taxonomy">
+          <div class="taxon">
+            <b>Lattice coefficients</b>
+            <span>Random values or gradients on a regular or simplex lattice: value, Perlin, simplex, OpenSimplex.</span>
+          </div>
+          <div class="taxon">
+            <b>Feature points</b>
+            <span>Random sites whose nearest-distance statistics define the field: cellular or Worley noise.</span>
+          </div>
+          <div class="taxon">
+            <b>Oscillatory atoms</b>
+            <span>Localized Gabor kernels or global plane waves, with explicit frequency and orientation structure.</span>
+          </div>
+          <div class="taxon">
+            <b>Phase and periodic tiles</b>
+            <span>A stochastic phase passed through a profile, or a band-limited tile reconstructed periodically.</span>
+          </div>
+        </div>
+        <div class="callout secondary">
+          <p>
+            <strong>fBm, ridged, billow, and domain warping are not new base
+            noises.</strong> They are operators applied to a base field. This is
+            a small distinction, but it prevents many confused comparisons.
+          </p>
+        </div>
+
+        <h2 id="lattice"><span class="n">1.</span>Value and gradient lattices</h2>
+        <p>
+          Lattice methods are point-evaluable: only a small neighborhood around
+          the query coordinate is needed. A coordinate hash supplies the random
+          coefficients, so the field is reproducible without storing a large
+          texture. The variants differ in the coefficient attached to each
+          lattice site and in the geometry of the neighborhood.
+        </p>
+
+        <div class="method-card" id="value-noise">
+          <h3>Value noise</h3>
+          <p>
+            Value noise assigns one random scalar $a_i$ to every lattice corner
+            and interpolates the surrounding values. In one dimension,
+            $N(x)=(1-f(t))a_i+f(t)a_{i+1}$, with $t=x-i$ and a smooth fade
+            function $f$. The two-dimensional construction is the tensor product
+            of the same interpolation.
+          </p>
+          <p>
+            Its main virtue is transparency. The coefficients are literal
+            heights, densities, or weights, so it is easy to reason about and
+            cheap to implement. The main limitation is equally visible: the
+            lattice is doing all the work, and broad fields often reveal soft
+            square-grid structure.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>one scalar at each lattice corner</div>
+            <div><span>good at</span>cheap broad modulation, masks, slowly varying control fields</div>
+            <div><span>watch for</span>blocky or axis-aligned structure at low frequencies</div>
+          </div>
+          <details class="snippet">
+            <summary>minimal mechanism</summary>
+            <pre><code>i = floor(x)
+t = x - i
+u = fade(t)
+return lerp(hash(i, seed), hash(i + 1, seed), u)</code></pre>
+          </details>
+        </div>
+
+        <div class="method-card" id="perlin-noise">
+          <h3>Perlin noise</h3>
+          <p>
+            Perlin noise replaces scalar corner values with gradient vectors.
+            A corner contributes the dot product between its gradient $g_i$ and
+            the displacement from the corner, $q_i(x)=g_i^\top(x-i)$. The dot
+            products are then interpolated with a quintic fade. The field is
+            therefore shaped by local directional tendencies rather than by
+            literal corner heights.
+          </p>
+          <p>
+            This gives smoother-looking slopes and makes Perlin noise a useful
+            default for height, density, and flow-adjacent fields. It is still a
+            Cartesian-lattice method. With unfortunate scale, gradient set, or
+            downstream thresholding, horizontal, vertical, and diagonal
+            preferences remain visible.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>a gradient direction at each Cartesian corner</div>
+            <div><span>good at</span>smooth scalar fields and stable finite-difference normals</div>
+            <div><span>watch for</span>preferred lattice directions and repeated cell-scale motifs</div>
+          </div>
+          <details class="snippet">
+            <summary>minimal mechanism</summary>
+            <pre><code>g00 = gradient(hash(i, j, seed))
+q00 = dot(g00, [x - i, y - j])
+# repeat for the four corners
+return quintic_bilerp(q00, q10, q01, q11)</code></pre>
+          </details>
+        </div>
+
+        <div class="method-card" id="simplex-noise">
+          <h3>Simplex noise</h3>
+          <p>
+            Simplex noise keeps gradient coefficients but replaces square cells
+            with triangles in two dimensions and tetrahedra in three. After a
+            skew transform identifies the containing simplex, only $d+1$
+            corners contribute. Each contribution has compact radial support,
+            commonly of the form
+          </p>
+          $$ q_k=(r^2-\lVert d_k\rVert^2)_+^4\,g_k^\top d_k. $$
+          <p>
+            The triangular neighborhood reduces the visual dominance of the
+            Cartesian axes and scales more favorably to higher dimensions. It
+            does not become perfectly isotropic; it replaces a strong square
+            lattice signature with a weaker simplicial one.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>gradients on a simplex lattice</div>
+            <div><span>good at</span>compact support, higher dimensions, less Cartesian appearance</div>
+            <div><span>watch for</span>slightly sharper grain and residual simplex-direction bias</div>
+          </div>
+        </div>
+
+        <div class="method-card" id="opensimplex-noise">
+          <h3>OpenSimplex</h3>
+          <p>
+            OpenSimplex is another gradient-lattice construction. It stretches
+            the input into a convenient lattice space, evaluates a small set of
+            nearby contributions, and squishes the geometry back. Its practical
+            purpose is similar to simplex noise: reduce obvious Cartesian
+            artifacts while retaining deterministic local evaluation.
+          </p>
+          <p>
+            In a renderer or terrain system, the choice between simplex and
+            OpenSimplex is usually empirical. Both provide a general-purpose,
+            isotropic-looking basis. The more important controls are often the
+            coordinate scale, octave schedule, and any warp applied later.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>hashed gradients on a stretched/squished lattice</div>
+            <div><span>good at</span>organic masks, terrain bases, displacement fields</div>
+            <div><span>watch for</span>implementation variants with different scaling and spectra</div>
+          </div>
+        </div>
+
+        <div class="demo" data-demo="base-noise-lab">
+          <p class="demo-fallback">Interactive comparison — needs JavaScript.</p>
+        </div>
+
+        <figure class="wide">
+          <a href="artifacts/noise-zoo-base.png">
+            <img
+              src="artifacts/noise-zoo-base.png"
+              alt="Gallery comparing value, Perlin, simplex, OpenSimplex, cellular, Gabor, phasor, wave, and wavelet noise"
+            />
+          </a>
+          <figcaption>
+            The base-noise gallery uses a common seed and coordinate range. It
+            is a comparison of mechanisms rather than a quality ranking. The
+            cellular and spectral families shown on the second row are reviewed
+            separately below. Click for the full-resolution image.
+          </figcaption>
+        </figure>
+
+        <h2 id="cellular"><span class="n">2.</span>Cellular / Worley noise</h2>
+        <p>
+          Cellular noise starts from random feature sites rather than random
+          amplitudes. A common implementation places one jittered site in each
+          lattice cell and inspects the $3\times3$ neighboring cells around a
+          query. If $F_k(x)$ is the distance to the $k$-th nearest site, then the
+          output already has geometric meaning.
+        </p>
+
+        <div class="method-card">
+          <h3>$F_1$, $F_2$, and $F_2-F_1$</h3>
+          <p>
+            $F_1$ is the nearest-site distance. It produces pits, spots, cell
+            interiors, and radial growth around sites. $F_2$ has a broader
+            regional character. The difference $F_2-F_1$ becomes small where
+            two sites are equally competitive, so it traces Voronoi boundaries
+            and is useful for cracks, veins, or territory walls.
+          </p>
+          <p>
+            The distance metric is a structural parameter, not a cosmetic one.
+            Euclidean distance yields rounded cells, Manhattan distance produces
+            diamond-like regions, and Chebyshev distance produces axis-aligned
+            square forms. Minima over competing sites also introduce derivative
+            discontinuities at cell boundaries; here those discontinuities are
+            often the desired feature.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>feature-point position inside each spatial cell</div>
+            <div><span>good at</span>cells, cracks, craters, territories, nearest-object effects</div>
+            <div><span>watch for</span>distance output is not centered noise; boundaries are nonsmooth</div>
+          </div>
+          <details class="snippet">
+            <summary>minimal mechanism</summary>
+            <pre><code>distances = []
+for neighbor_cell in surrounding_3x3:
+    p = neighbor_cell + hashed_jitter(neighbor_cell, seed)
+    distances.append(metric(x - p))
+f1, f2 = two_smallest(distances)
+return f1              # or f2, or f2 - f1</code></pre>
+          </details>
+        </div>
+
+        <div class="demo" data-demo="cellular-noise-lab">
+          <p class="demo-fallback">Interactive cellular field — needs JavaScript.</p>
+        </div>
+
+        <figure class="wide">
+          <a href="artifacts/noise-zoo-cellular.png">
+            <img
+              src="artifacts/noise-zoo-cellular.png"
+              alt="Cellular noise gallery comparing F1, F2, and F2 minus F1 under Euclidean, Manhattan, and Chebyshev metrics"
+            />
+          </a>
+          <figcaption>
+            The same feature-site process viewed through three statistics and
+            three metrics. The visible geometry changes because the output
+            semantics change, even though the random sites are unchanged.
+          </figcaption>
+        </figure>
+
+        <h2 id="spectral"><span class="n">3.</span>Gabor, phasor, and wave noise</h2>
+        <p>
+          Lattice noise controls smoothness and locality indirectly. Spectral
+          methods make frequency and orientation more explicit. They are useful
+          for fibers, sediment, wood grain, wind-aligned texture, and any field
+          where “how much energy appears at which direction and wavelength” is a
+          primary design requirement.
+        </p>
+
+        <div class="method-card" id="gabor-noise">
+          <h3>Gabor noise</h3>
+          <p>
+            A Gabor atom is a sinusoid inside a Gaussian envelope. Sparse Gabor
+            noise scatters such atoms in space and sums nearby contributions,
+          </p>
+          $$
+          N(x)=\sum_i w_i\exp\!\left(-\pi a^2\lVert x-p_i\rVert^2\right)
+          \cos\!\left(2\pi F_0\,u_i^\top(x-p_i)+\phi_i\right).
+          $$
+          <p>
+            $F_0$ controls the principal frequency, $a$ controls spatial
+            bandwidth, and $u_i$ controls orientation. Random orientations give
+            an isotropic texture; a shared orientation gives an anisotropic one.
+            The Gaussian envelope keeps each impulse local, but the method is
+            more expensive than one lattice interpolation because several
+            impulses contribute to every query.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>localized, windowed sinusoidal impulses</div>
+            <div><span>good at</span>directional texture with explicit frequency and bandwidth</div>
+            <div><span>watch for</span>higher evaluation cost and parameter-sensitive normalization</div>
+          </div>
+        </div>
+
+        <div class="method-card" id="phasor-noise">
+          <h3>Phasor noise</h3>
+          <p>
+            Phasor noise accumulates complex oscillatory contributions and uses
+            the angle of the sum as a stochastic phase field,
+            $\Phi(x)=\arg\sum_i z_i(x)$. A one-dimensional periodic profile is
+            then applied to $\Phi$: sine for smooth stripes, triangle for linear
+            ramps, sawtooth for directional layers, or square for binary bands.
+          </p>
+          <p>
+            This separates <em>where the phase bends</em> from <em>how one period
+            is rendered</em>. It preserves strong contrast even where a direct
+            sum of positive and negative sinusoids would cancel. Phase defects
+            and singular points are part of the construction and can appear as
+            branching or terminating lines.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>a coherent complex phase accumulation</div>
+            <div><span>good at</span>stripes, grain, sediment layers, oscillating masks</div>
+            <div><span>watch for</span>phase singularities and abrupt profiles such as square waves</div>
+          </div>
+        </div>
+
+        <div class="method-card" id="wave-noise">
+          <h3>Wave noise</h3>
+          <p>
+            Wave noise represents the field as a sum of global plane waves,
+            $N(x)=\sum_k a_k\cos(2\pi f_k u_k^\top x+\phi_k)$. Instead of
+            reconstructing from nearby lattice sites, it samples a set of
+            directions and frequencies directly. With enough components the sum
+            behaves like a Gaussian random field with a designed spectrum; its
+            accumulated complex phase can also be sent through a periodic
+            profile.
+          </p>
+          <p>
+            The construction is conceptually clean when the spectrum is the
+            specification. Its support is global: every wave contributes at
+            every point. That makes naïve evaluation proportional to the number
+            of waves and changes the usual streaming/per-cell performance model.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>global plane-wave direction, frequency, phase, amplitude</div>
+            <div><span>good at</span>direct spectral design and smooth globally coherent fields</div>
+            <div><span>watch for</span>global support and cost proportional to component count</div>
+          </div>
+        </div>
+
+        <div class="demo" data-demo="spectral-noise-lab">
+          <p class="demo-fallback">Interactive spectral field — needs JavaScript.</p>
+        </div>
+
+        <figure class="wide">
+          <a href="artifacts/noise-zoo-spectral.png">
+            <img
+              src="artifacts/noise-zoo-spectral.png"
+              alt="Gallery of isotropic and oriented Gabor noise, phasor profiles, wave profiles, and wavelet noise"
+            />
+          </a>
+          <figcaption>
+            Spectral and periodic controls. Gabor orientation reorganizes local
+            energy; phasor profiles change the rendering of the same kind of
+            phase organization; wave noise uses global components; wavelet noise
+            appears as a periodic band-limited tile.
+          </figcaption>
+        </figure>
+
+        <h2 id="wavelet"><span class="n">4.</span>Wavelet noise</h2>
+        <div class="method-card">
+          <h3>A tile designed for reconstruction</h3>
+          <p>
+            Wavelet noise begins with a random periodic tile, removes a
+            low-frequency reconstruction of that tile, and evaluates the
+            remaining band-pass coefficients with a smooth periodic basis. In a
+            compact form, $T_{\mathrm{band}}=T-L(T)$, where $L$ is a separable
+            downsample-and-upsample low-pass operator. Quadratic B-spline weights
+            then reconstruct the field while wrapping at tile boundaries.
+          </p>
+          <p>
+            The result is tileable and deliberately band-limited. That is useful
+            when a texture will be minified, filtered, or repeated and the
+            uncontrolled high-frequency content of ordinary lattice noise would
+            alias. Unlike a purely point-hashed field, it requires a precomputed
+            coefficient tile and therefore trades a small amount of storage for
+            predictable spectral behavior.
+          </p>
+          <div class="method-meta">
+            <div><span>random primitive</span>coefficients in a periodic band-pass tile</div>
+            <div><span>good at</span>tileable detail and filtered or anti-aliased procedural texture</div>
+            <div><span>watch for</span>tile memory, periodic repetition, and preprocessing complexity</div>
+          </div>
+          <details class="snippet">
+            <summary>minimal mechanism</summary>
+            <pre><code>random_tile = normal_samples(n, n, seed)
+low = upsample(downsample(random_tile))
+band = random_tile - low
+return periodic_bspline_reconstruction(band, x, y)</code></pre>
+          </details>
+        </div>
+
+        <h2 id="octaves"><span class="n">5.</span>fBm, ridged, and billow</h2>
+        <p>
+          A single base field usually occupies a narrow range of scales. Natural
+          surfaces often need broad structure and fine variation together, so
+          the same basis is evaluated at increasing frequencies and decreasing
+          amplitudes,
+        </p>
+        <div class="callout">
+          $$
+          F(x)=\frac{1}{Z}\sum_{o=0}^{m-1} a_0G^o\,
+          R\!\left(N(f_0L^o x;s_o)\right).
+          $$
+          <p class="equation-note">
+            $L$ is lacunarity, $G$ is gain or persistence, and $R$ is an optional
+            per-octave remap.
+          </p>
+        </div>
+        <p>
+          With $R(n)=n$, this is the usual fBm-style octave sum. Ridged noise
+          uses a remap such as $R(n)=(1-|n|)^2$, turning zero crossings into
+          crests. Billow noise uses $R(n)=2|n|-1$, folding the field into rounded
+          lobes. These transforms change the value distribution and morphology;
+          they do not change the underlying neighborhood construction.
+        </p>
+        <p>
+          Lacunarity determines how quickly new spatial detail enters. Gain
+          determines how much the fine octaves matter. A large octave count is
+          not automatically better: beyond the resolution at which the field is
+          sampled or rendered, added high-frequency energy aliases or simply
+          wastes computation.
+        </p>
+
+        <div class="demo" data-demo="octave-noise-lab">
+          <p class="demo-fallback">Interactive octave composer — needs JavaScript.</p>
+        </div>
+
+        <figure class="wide">
+          <a href="artifacts/noise-zoo-octaves.png">
+            <img
+              src="artifacts/noise-zoo-octaves.png"
+              alt="Gallery of fBm, ridged, and billow combinations applied to value, Perlin, simplex, and OpenSimplex noise"
+            />
+          </a>
+          <figcaption>
+            fBm, ridged, and billow applied to four bases under the same octave
+            schedule. The large visual change is produced by the multiscale sum
+            and remap; the base still controls the local texture and artifacts.
+          </figcaption>
+        </figure>
+
+        <h2 id="warping"><span class="n">6.</span>Domain warping</h2>
+        <p>
+          Domain warping modifies coordinates before evaluating the visible
+          field. Given a displacement field $q(x)$,
+        </p>
+        <div class="callout">
+          $$ \phi(x)=x+Aq(x), \qquad Y(x)=N(\phi(x)). $$
+        </div>
+        <p>
+          $N$ controls the local value statistics; $q$ controls how the domain
+          bends. Using two independently seeded fBm fields for the two coordinate
+          components turns blobs into flowing, folded, or marbled structures.
+          Warp amplitude sets the displacement size, while warp frequency sets
+          the scale at which the coordinate system changes direction.
+        </p>
+        <p>
+          Large amplitudes can create severe compression and apparent folds.
+          This is often useful visually, but it also means local derivatives can
+          grow and the field may be difficult to sample safely. For animation,
+          collision geometry, or physically interpreted gradients, the warp
+          should be treated as a map with its own regularity constraints rather
+          than as a free decorative knob.
+        </p>
+        <details class="snippet">
+          <summary>minimal mechanism</summary>
+          <pre><code>qx = fbm(base, x, y, seed + 31)
+qy = fbm(base, x + 5.2, y + 1.3, seed + 37)
+return base(x + amplitude * qx,
+            y + amplitude * qy,
+            seed)</code></pre>
+        </details>
+
+        <div class="demo" data-demo="warp-noise-lab">
+          <p class="demo-fallback">Interactive domain warp — needs JavaScript.</p>
+        </div>
+
+        <figure class="wide">
+          <a href="artifacts/noise-zoo-warp.png">
+            <img
+              src="artifacts/noise-zoo-warp.png"
+              alt="Plain, domain-warped, and difference fields for value, Perlin, simplex, and OpenSimplex noise"
+            />
+          </a>
+          <figcaption>
+            Plain fields, warped fields, and their differences. The basis remains
+            identifiable, but the geometry is reorganized by the displacement
+            map.
+          </figcaption>
+        </figure>
+
+        <h2 id="selection"><span class="n">7.</span>A practical selection guide</h2>
+        <p>
+          The choice should start from output semantics and computational
+          constraints, not from a universal ranking. A compact rule of thumb is:
+        </p>
+        <div class="selection-grid">
+          <div><b>Smooth scalar modulation</b>Start with Perlin, simplex, or OpenSimplex. Compare spectra and lattice artifacts at the actual application scale.</div>
+          <div><b>Cells, cracks, or ownership</b>Use cellular $F_1$, $F_2-F_1$, or an explicit Voronoi ownership field.</div>
+          <div><b>Directional frequency structure</b>Use Gabor for local atoms, phasor for persistent bands, or wave noise for a directly specified global spectrum.</div>
+          <div><b>Tileable filtered detail</b>Use a wavelet or other explicitly band-limited periodic construction.</div>
+          <div><b>Multiscale roughness</b>Compose a suitable base with fBm, ridged, or billow octaves; stop before unresolved frequencies.</div>
+          <div><b>Flowing geometry</b>Warp coordinates with a low-frequency vector field, then inspect derivatives and sampling density.</div>
+        </div>
+
+        <div class="callout secondary">
+          <p>
+            Noise is a source of structured variation, not a replacement for
+            geometry or simulation. Connectivity, ownership, conservation, and
+            causality usually require explicit graphs, regions, signed-distance
+            fields, or dynamical models. Noise works best when it supplies
+            residual variation around those structures.
+          </p>
+        </div>
+
+        <p class="muted">
+          The companion notebook reproduces all five galleries, computes field
+          statistics and power spectra, and adds method-by-method experiments on
+          lattice bias, phase profiles, octave schedules, and warp displacement:
+          <a href="artifacts/experiments.ipynb">experiments.ipynb</a>.
+        </p>
+      </article>
+
+      <footer>© Mikhail Kuznetsov · <a href="/posts/">all posts</a></footer>
+    </div>
+    <script defer src="demo/demo.js"></script>
+  </body>
+</html>
