@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Implicit maximum likelihood estimation (IMLE) — Mikhail Kuznetsov</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+    <link rel="stylesheet" href="/assets/demos.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+          ],
+          throwOnError: false,
+        });
+      });
+    </script>
+    <style>
+      :root { --bg:#0e1116; --panel:#151a21; --line:#222a35; --fg:#d7dde6; --muted:#8a94a3; --accent:#4aa3ff; --accent2:#e0a458; --green:#2a9d8f; --red:#d1495b; --purple:#c792ea; }
+      * { box-sizing: border-box; } html { scroll-behavior: smooth; }
+      body { margin:0; background:var(--bg); color:var(--fg); font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-weight:300; line-height:1.72; font-size:16px; -webkit-font-smoothing:antialiased; }
+      .wrap { max-width:790px; margin:0 auto; padding:38px 22px 90px; }
+      nav { display:flex; gap:22px; padding-bottom:26px; margin-bottom:30px; border-bottom:1px solid var(--line); font-size:14px; }
+      nav a { color:var(--muted); text-decoration:none; letter-spacing:0.02em; } nav a:hover { color:var(--accent); }
+      a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+      h1 { font-weight:500; font-size:32px; line-height:1.24; margin:8px 0 8px; letter-spacing:-0.02em; }
+      .subtitle { color:var(--muted); font-size:15px; line-height:1.6; margin:0 0 12px; }
+      .meta { color:var(--muted); font-size:13px; margin-bottom:30px; }
+      h2 { font-weight:500; font-size:22px; line-height:1.35; margin:58px 0 15px; padding-top:5px; color:var(--fg); }
+      h2 .n { color:var(--accent); font-weight:700; font-size:15px; margin-right:10px; }
+      h3 { font-weight:500; font-size:18px; margin:34px 0 10px; color:var(--fg); }
+      p { margin:14px 0; color:#c6cdd8; } em { color:var(--fg); } strong { color:var(--fg); font-weight:700; }
+      .lead { color:var(--fg); font-size:17px; line-height:1.76; }
+      .callout { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:7px; padding:10px 20px; margin:24px 0; color:var(--fg); }
+      .callout.secondary { border-left-color: var(--accent2); }
+      .toc { margin:28px 0 34px; padding:18px 20px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+      .toc-title { color:var(--accent2); font-size:13px; font-weight:500; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; }
+      .toc-grid,.formula-grid,.takeaways,.gif-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+      .toc-grid { gap:5px 22px; font-size:14px; } .toc-grid a { color:#b8c1ce; }
+      .formula-card,.takeaways > div { padding:15px 16px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+      .formula-card b,.takeaways b { display:block; margin-bottom:6px; color:var(--accent2); font-size:14px; }
+      .formula-card span,.takeaways span { color:var(--muted); font-size:13px; line-height:1.55; }
+      .method-card { margin:18px 0 28px; padding:18px 20px; background:linear-gradient(180deg, rgba(21,26,33,0.95), rgba(18,22,28,0.95)); border:1px solid var(--line); border-radius:9px; }
+      .method-card h3 { margin-top:0; }
+      .method-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; }
+      .method-meta div { border-top:1px solid var(--line); padding-top:9px; color:var(--muted); font-size:12.5px; line-height:1.5; }
+      .method-meta span { display:block; color:var(--accent2); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:3px; }
+      figure { margin:32px 0; text-align:center; } figure img { max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:var(--panel); display:block; margin:0 auto; }
+      figcaption { color:var(--muted); font-size:13px; line-height:1.6; margin-top:12px; text-align:left; }
+      table { width:100%; border-collapse:collapse; margin:24px 0; font-size:14px; } th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; } th { color:var(--accent2); font-weight:500; }
+      details.snippet { margin:15px 0 5px; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
+      details.snippet summary { cursor:pointer; padding:9px 13px; color:var(--muted); font-size:12.5px; background:rgba(14,17,22,0.55); }
+      pre { margin:0; padding:15px 16px; overflow-x:auto; background:#0b0e13; border-top:1px solid var(--line); font-size:12.5px; line-height:1.55; white-space:pre-wrap; }
+      code { color:#c9d3df; font-family:inherit; }
+      .equation-note,.muted { color:var(--muted); font-size:13px; }
+      .demo { width:min(980px, calc(100vw - 32px)); margin-left:50%; transform:translateX(-50%); }
+      footer { margin-top:58px; padding-top:22px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+      .katex-display { margin:19px 0; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+      @media (max-width:720px) { .toc-grid,.formula-grid,.takeaways,.gif-grid,.method-meta { grid-template-columns:1fr; } .demo { width:100%; margin-left:0; transform:none; } }
+    </style>
+    <script defer src="demo/demo.js"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav><a href="/">Home</a><a href="/posts/">Blog</a><a href="/cv/Working_CV.pdf">CV</a></nav>
+      <article class="post">
+        <h1>Implicit maximum likelihood estimation (IMLE)</h1>
+        <p class="subtitle">An overview of the objective, algorithm, likelihood connection, and synthetic examples for Gaussian, Gaussian-mixture, Cauchy, and misspecified models.</p>
+        <div class="meta">2026-07-11 · interactive figures · companion notebook</div>
+        <p class="lead">IMLE trains implicit generative models without requiring a tractable likelihood. It draws samples from the current model, assigns each data point to its nearest sample, and updates the model to reduce those distances.</p>
+        <p>Because matching runs from data points to model samples, every training example must be covered by at least one generated point. This discourages the generator from concentrating probability mass on only a few modes. The examples below show the assignment geometry and the main failure cases.</p>
+
+        <div class="toc"><div class="toc-title">Contents</div><div class="toc-grid">
+          <a href="#setup">1. Why implicit models are hard</a>
+          <a href="#idea">2. Core idea and formulas</a>
+          <a href="#algorithm">3. Algorithm and pseudocode</a>
+          <a href="#intuition">4. Likelihood intuition</a>
+          <a href="#gifs">5. Animated synthetic cases</a>
+          <a href="#interactive">6. Interactive examples</a>
+          <a href="#failures">7. Failure modes and caveats</a>
+          <a href="#takeaways">8. Summary</a>
+        </div></div>
+
+        <h2 id="setup"><span class="n">1.</span>Why implicit models are hard</h2>
+        <p>The paper studies models of the form $x = T_\theta(z)$ with latent variable $z\sim \mathcal N(0,I)$. This representation supports direct sampling and flexible model classes, but it usually does not provide a closed-form density $p_\theta(x)$ for likelihood optimization.</p>
+        <div class="callout"><p><strong>Training problem:</strong> fit a sampler with a likelihood-related objective without evaluating the likelihood itself.</p></div>
+
+        <h2 id="idea"><span class="n">2.</span>Core idea and formulas</h2>
+        <p>Given data $x_1,\dots,x_n$ and i.i.d. model samples $\tilde x_1^\theta,\dots,\tilde x_m^\theta$, define the squared distance from each data point to its nearest sample:</p>
+        $$R_i^\theta = \min_{j\in[m]} \lVert \tilde x_j^\theta - x_i \rVert_2^2.$$
+        <p>IMLE chooses parameters by minimizing the expected total nearest-sample distance:</p>
+        $$\hat\theta_{\rm IMLE} = \arg\min_\theta\; \mathbb E\left[\sum_{i=1}^n R_i^\theta\right] = \arg\min_\theta\; \mathbb E\left[\sum_{i=1}^n \min_{j\in[m]} \lVert \tilde x_j^\theta - x_i \rVert_2^2\right].$$
+        <p class="equation-note">Each data point is matched to its nearest model sample.</p>
+        <div class="formula-grid">
+          <div class="formula-card"><b>Randomness</b><span>The objective is estimated from a Monte Carlo batch drawn from the current model.</span></div>
+          <div class="formula-card"><b>Asymmetry</b><span>Nearest-neighbor matching runs from data points to model samples, not in the reverse direction.</span></div>
+          <div class="formula-card"><b>Requirements</b><span>No discriminator, partition function, or explicit density evaluation is required.</span></div>
+          <div class="formula-card"><b>Interpretation</b><span>Alternate nearest-neighbor assignment with gradient updates that move the selected samples toward the data.</span></div>
+        </div>
+
+        <figure>
+          <a href="artifacts/imle-nearest-sample-geometry.png"><img src="artifacts/imle-nearest-sample-geometry.png" alt="IMLE assignments between data points and sampled model points" /></a>
+          <figcaption>One-step geometry. Model samples are drawn first, then each data point is connected to its nearest sample.</figcaption>
+        </figure>
+
+        <h2 id="algorithm"><span class="n">3.</span>Algorithm and pseudocode</h2>
+        <p>The algorithm alternates between sampling, nearest-neighbor assignment, and several optimization steps with the assignments held fixed:</p>
+        <details class="snippet" open><summary>Compact pseudocode</summary><pre><code>input: data {x_i}_i=1^n, implicit sampler x = T_θ(z)
+initialize θ
+for outer iteration k = 1..K:
+    draw m i.i.d. samples \tilde x_1^θ, ..., \tilde x_m^θ
+    choose a data batch S
+    for each i in S:
+        σ(i) ← argmin_j ||x_i - \tilde x_j^θ||²
+    for inner iteration l = 1..L:
+        choose mini-batch \tilde S ⊆ S
+        θ ← θ - η ∇_θ [ (n/|\tilde S|) Σ_{i∈\tilde S} ||x_i - \tilde x_{σ(i)}^θ||² ]
+return θ</code></pre></details>
+        <div class="method-card"><h3>Optimization properties</h3><p>IMLE uses a single objective and does not require a learned discriminator. When data and model samples are far apart, nearest-sample distances remain nonzero, so the update can still produce useful gradients.</p><div class="method-meta"><div><span>requirements</span>sampling from the model, backpropagation through samples, nearest-neighbor search</div><div><span>behavior</span>data-to-sample matching encourages mode coverage</div><div><span>cost</span>large sample batches and repeated nearest-neighbor search can be expensive</div></div></div>
+
+        <h2 id="intuition"><span class="n">4.</span>Likelihood intuition</h2>
+        <p>Under the conditions stated in the paper, the IMLE estimator has the same optimum as maximum likelihood. In the one-point case, increasing model density near a data point $x$ makes nearby samples more likely and lowers the expected nearest-sample distance.</p>
+        $$\mathbb E[\tilde R] = \int_0^\infty \Pr(\tilde R > t)\,dt.$$
+        <p>For a nonnegative random variable, a smaller expected distance indicates that more probability mass lies near the data. The multi-point result requires additional assumptions and a more technical argument.</p>
+        <div class="callout secondary"><p><strong>Likelihood connection:</strong> IMLE does not use the log-likelihood gradient. It uses a surrogate objective that shares the maximum-likelihood optimum under the paper’s assumptions.</p></div>
+
+        <h2 id="gifs"><span class="n">5.</span>Animated synthetic cases</h2>
+        <p>The dashed curve is the target density, the blue curve is the current model density, and the green marks are a fixed set of model samples. The lower strip shows a subset of nearest-sample assignments at each outer step.</p>
+        <div class="gif-grid">
+          <figure><img src="artifacts/imle-gaussian-fit.gif" alt="Animated fit of a Gaussian with IMLE" /><figcaption><strong>Gaussian.</strong> With a correctly specified model family, IMLE adjusts the mean and scale toward the target.</figcaption></figure>
+          <figure><img src="artifacts/imle-gaussian-mixture-fit.gif" alt="Animated fit of a Gaussian mixture with IMLE" /><figcaption><strong>Gaussian mixture.</strong> A two-component model can allocate samples to both modes.</figcaption></figure>
+          <figure><img src="artifacts/imle-cauchy-fit.gif" alt="Animated fit of a Cauchy distribution with IMLE" /><figcaption><strong>Cauchy.</strong> The objective also applies to a heavy-tailed location-scale family.</figcaption></figure>
+          <figure><img src="artifacts/imle-failure-underfit.gif" alt="Animated failure case fitting a single Gaussian to a bimodal target" /><figcaption><strong>Misspecified model.</strong> A single Gaussian cannot represent two sharp modes, so it broadens and approximates both poorly.</figcaption></figure>
+        </div>
+        <figure><img src="artifacts/imle-synthetic-summary.png" alt="Final IMLE fits on several synthetic targets" /><figcaption>Final states from four synthetic experiments. Performance depends on model capacity; a misspecified family can only approximate the target within its representational limits.</figcaption></figure>
+
+        <h2 id="interactive"><span class="n">6.</span>Interactive examples</h2>
+        <p>The three widgets display nearest-neighbor assignments, current parameter values, and the effect of sample count in low-dimensional examples.</p>
+        <h3>6.1 Assignment geometry</h3>
+        <div class="demo" data-demo="imle-geometry"><p class="demo-fallback">Interactive geometry demo — needs JavaScript.</p></div>
+        <h3>6.2 Synthetic trainer</h3>
+        <div class="demo" data-demo="imle-trainer"><p class="demo-fallback">Interactive training demo — needs JavaScript.</p></div>
+        <h3>6.3 Failure lab</h3>
+        <div class="demo" data-demo="imle-failures"><p class="demo-fallback">Interactive failure demo — needs JavaScript.</p></div>
+
+        <h2 id="failures"><span class="n">7.</span>Failure modes and caveats</h2>
+        <table><thead><tr><th>Issue</th><th>Effect</th><th>Implication</th></tr></thead><tbody>
+          <tr><td>Misspecified model</td><td>If the family cannot represent the target, IMLE broadens or averages modes within that family.</td><td>The model may cover multiple modes while assigning excess probability between them.</td></tr>
+          <tr><td>Too few sampled points</td><td>The Monte Carlo support is sparse, so some data points are matched to distant samples.</td><td>The objective estimate becomes noisy even when the model family is correct.</td></tr>
+          <tr><td>Distance choice</td><td>The method optimizes closeness under the chosen metric.</td><td>In images, Euclidean distance may not match perceptual similarity.</td></tr>
+          <tr><td>Nearest-neighbor cost</td><td>Large sample sets and repeated searches can dominate runtime.</td><td>Approximate nearest-neighbor methods may be needed at scale.</td></tr>
+        </tbody></table>
+
+        <h2 id="takeaways"><span class="n">8.</span>Summary</h2>
+        <div class="takeaways">
+          <div><b>Objective</b><span>Sample from the current model, assign each data point to its nearest sample, and reduce those distances by gradient descent.</span></div>
+          <div><b>Matching direction</b><span>Data points choose model samples, which encourages coverage of the observed modes.</span></div>
+          <div><b>Likelihood connection</b><span>Under explicit assumptions, the IMLE and maximum-likelihood estimators have the same optimum.</span></div>
+          <div><b>Limitations</b><span>Insufficient model capacity, small sample batches, and an unsuitable distance metric can all degrade the fit.</span></div>
+        </div>
+        <p class="muted">Companion material: <a href="artifacts/experiments.ipynb">notebook</a> · synthetic artifacts in <code>artifacts/</code> · widget source in <code>demo/demo.src.js</code>.</p>
+      </article>
+      <footer>Based on Ke Li and Jitendra Malik, <em>Implicit Maximum Likelihood Estimation</em> (2018), plus the synthetic experiments in the companion notebook.</footer>
+    </div>
+  </body>
+</html>
