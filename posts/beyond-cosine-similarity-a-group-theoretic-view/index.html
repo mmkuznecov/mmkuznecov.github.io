@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Beyond cosine similarity: a group-theoretic view — Mikhail Kuznetsov</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "\\[", right: "\\]", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false }
+          ],
+          throwOnError: false
+        });
+      });
+    </script>
+    <style>
+      :root {
+        --bg:#0e1116; --panel:#151a21; --line:#222a35; --fg:#d7dde6;
+        --muted:#8a94a3; --accent:#4aa3ff; --accent2:#e0a458;
+        --green:#2a9d8f; --red:#d1495b; --purple:#c792ea;
+      }
+      * { box-sizing:border-box; }
+      html { scroll-behavior:smooth; }
+      body {
+        margin:0; background:var(--bg); color:var(--fg);
+        font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+        font-weight:300; line-height:1.72; font-size:16px; -webkit-font-smoothing:antialiased;
+      }
+      .wrap { max-width:790px; margin:0 auto; padding:38px 22px 90px; }
+      nav { display:flex; gap:22px; padding-bottom:26px; margin-bottom:30px; border-bottom:1px solid var(--line); font-size:14px; }
+      nav a { color:var(--muted); text-decoration:none; letter-spacing:.02em; }
+      nav a:hover { color:var(--accent); }
+      a { color:var(--accent); text-decoration:none; }
+      a:hover { text-decoration:underline; }
+      h1 { font-weight:500; font-size:32px; line-height:1.24; margin:8px 0; letter-spacing:-.02em; }
+      .subtitle { color:var(--muted); font-size:15px; line-height:1.6; margin:0 0 12px; }
+      .meta { color:var(--muted); font-size:13px; margin-bottom:30px; }
+      h2 { font-weight:500; font-size:22px; line-height:1.35; margin:58px 0 15px; padding-top:5px; color:var(--fg); }
+      h2 .n { color:var(--accent); font-weight:700; font-size:15px; margin-right:10px; }
+      h3 { font-weight:500; font-size:18px; margin:34px 0 10px; color:var(--fg); }
+      h4 { margin:0 0 4px; font-size:15px; color:var(--fg); font-weight:500; }
+      p { margin:14px 0; color:#c6cdd8; }
+      em { color:var(--fg); } strong { color:var(--fg); font-weight:700; }
+      .lead { color:var(--fg); font-size:17px; line-height:1.76; }
+      .callout { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:7px; padding:10px 20px; margin:24px 0; }
+      .callout.secondary { border-left-color:var(--accent2); }
+      .callout.warning { border-left-color:var(--red); }
+      .toc { margin:28px 0 34px; padding:18px 20px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+      .toc-title { color:var(--accent2); font-size:13px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+      .toc-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px 22px; font-size:14px; }
+      .toc-grid a { color:#b8c1ce; }
+      .cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:22px 0; }
+      .card { padding:15px 16px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+      .card b { display:block; margin-bottom:6px; color:var(--accent2); font-size:14px; }
+      .card span { color:var(--muted); font-size:13px; line-height:1.55; }
+      .method-card { margin:18px 0 28px; padding:18px 20px; background:linear-gradient(180deg,rgba(21,26,33,.95),rgba(18,22,28,.95)); border:1px solid var(--line); border-radius:9px; }
+      .method-card h3 { margin-top:0; }
+      .method-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:16px; }
+      .method-meta div { border-top:1px solid var(--line); padding-top:9px; color:var(--muted); font-size:12.5px; line-height:1.5; }
+      .method-meta span { display:block; color:var(--accent2); font-size:11px; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+      figure { margin:32px 0; text-align:center; }
+      figure.wide { width:min(1160px,calc(100vw - 32px)); margin-left:50%; transform:translateX(-50%); }
+      figure img { max-width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:var(--panel); display:block; margin:0 auto; }
+      figcaption { color:var(--muted); font-size:13px; line-height:1.6; margin-top:12px; text-align:left; }
+      table { width:100%; border-collapse:collapse; margin:24px 0; font-size:14px; }
+      th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+      th { color:var(--accent2); font-weight:500; }
+      details.snippet { margin:15px 0 5px; border:1px solid var(--line); border-radius:7px; overflow:hidden; }
+      details.snippet summary { cursor:pointer; padding:10px 13px; color:var(--muted); font-size:12.5px; background:rgba(14,17,22,.55); }
+      details.snippet > div { padding:7px 16px 13px; background:#0b0e13; border-top:1px solid var(--line); }
+      pre { margin:0; padding:15px 16px; overflow-x:auto; background:#0b0e13; border-top:1px solid var(--line); font-size:12.5px; line-height:1.55; white-space:pre-wrap; }
+      code { color:#c9d3df; font-family:inherit; }
+      .muted,.equation-note { color:var(--muted); font-size:13px; }
+      footer { margin-top:58px; padding-top:22px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+      .katex-display { margin:19px 0; overflow-x:auto; overflow-y:hidden; padding:2px 0; }
+      .demo { width:min(1020px,calc(100vw - 32px)); margin:28px 0 34px 50%; transform:translateX(-50%); }
+      .interactive-card { background:var(--panel); border:1px solid var(--line); border-radius:9px; overflow:hidden; }
+      .interactive-head { padding:14px 16px 8px; border-bottom:1px solid var(--line); }
+      .interactive-head p { margin:2px 0 5px; color:var(--muted); font-size:12.5px; line-height:1.5; }
+      .interactive-controls { display:flex; flex-wrap:wrap; gap:8px 12px; padding:10px 14px; border-bottom:1px solid var(--line); background:#11161d; }
+      .control { min-width:135px; flex:1 1 150px; display:flex; flex-direction:column; gap:4px; color:var(--muted); font-size:11px; }
+      .control span { display:flex; justify-content:space-between; gap:8px; }
+      .control b { color:var(--accent2); font-weight:500; }
+      .control select,.control input { width:100%; }
+      .control select { background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:5px; padding:5px; font-family:inherit; }
+      .interactive-controls button { align-self:end; background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:5px; padding:7px 12px; font-family:inherit; cursor:pointer; }
+      .interactive-controls button:hover { border-color:var(--accent); }
+      .interactive-card canvas { display:block; width:100%; background:var(--panel); }
+      .interactive-readout { min-height:42px; padding:10px 14px 12px; border-top:1px solid var(--line); color:var(--muted); font-size:12px; line-height:1.55; }
+      @media (max-width:720px) {
+        .toc-grid,.cards,.method-meta { grid-template-columns:1fr; }
+        figure.wide,.demo { width:100%; margin-left:0; transform:none; }
+      }
+    </style>
+    <script defer src="demo/demo.js"></script>
+  </head>
+  <body>
+    <div class="wrap">
+      <nav><a href="/">Home</a><a href="/posts/">Blog</a><a href="/cv/Working_CV.pdf">CV</a></nav>
+      <article class="post">
+        <h1>Beyond cosine similarity: a group-theoretic view</h1>
+        <p class="subtitle">Why cosine is standard, what recos changes, and how similarity metrics encode assumptions about symmetry, probability, coordinate order, and representation geometry.</p>
+        <div class="meta">2026-07-14 · paper review · original analysis · interactive figures · companion notebook</div>
+
+        <p class="lead">
+          Always interesting to me was the question of why everyone uses particular metrics. The answer I usually received was simply that cosine similarity is the standard choice.
+          MSE and MAE can be at be derived as likelihood solution for different noises. Cosine also has a directional likelihood interpretation, but that still does not explain why the
+          orthogonal geometry of the sphere should be the correct inductive bias for every embedding space. After reading Xinbo Ai’s
+          <a href="https://arxiv.org/abs/2602.05266"><em>Beyond Cosine Similarity</em></a>, I tried to derive a more general view from group actions:
+          a similarity score can normalize an observed alignment by the best alignment available under a chosen symmetry group.
+        </p>
+
+        <p>
+          This perspective puts cosine and the paper’s rearrangement-based score, <em>recos</em>, into one template. Cosine optimizes over rotations and reflections,
+          the orthogonal group $O(d)$. Recos optimizes over coordinate permutations, the symmetric group $S_d$. The change looks small in the formula, but it changes
+          the saturation condition, the invariance group, the geometry of the denominator, and the meaning of a high score.
+        </p>
+
+        <div class="callout">
+          <p><strong>One-line summary.</strong> A similarity metric is partly a statement about which transformations should count as equivalent. Cosine assumes angular geometry is intrinsic; recos assumes the ordering of individual coordinates carries meaningful structure.</p>
+        </div>
+
+        <details class="snippet">
+          <summary>A short likelihood aside: MSE, MAE, and cosine</summary>
+          <div>
+            <p>For a regression residual $r=y-\hat y$, fixed-variance Gaussian noise gives a negative log-likelihood proportional to $r^2$, hence MSE. Fixed-scale Laplace noise gives a term proportional to $|r|$, hence MAE.</p>
+            <p>Cosine does have a probabilistic intuition on the unit sphere. The von Mises–Fisher density satisfies $p(x\mid\mu,\kappa)\propto\exp(\kappa\mu^Tx)$, so with fixed concentration $\kappa$, maximizing likelihood is equivalent to maximizing cosine alignment. The remaining question is geometric: should embeddings be treated as directions modulo $O(d)$?</p>
+          </div>
+        </details>
+
+        <figure class="wide">
+          <a href="artifacts/likelihood-metric-stories.png"><img src="artifacts/likelihood-metric-stories.png" alt="Likelihood interpretations for squared error, absolute error, and cosine" /></a>
+          <figcaption>Three compact probabilistic stories. They justify particular objectives only after the corresponding noise model or sample space has been accepted.</figcaption>
+        </figure>
+
+        <div class="toc">
+          <div class="toc-title">Contents</div>
+          <div class="toc-grid">
+            <a href="#paper">1. The paper’s proposal</a>
+            <a href="#group">2. Similarity as orbit normalization</a>
+            <a href="#chambers">3. Weyl chambers and nonlinear monotonicity</a>
+            <a href="#probability">4. Random vectors and population limits</a>
+            <a href="#basis">5. The basis-dependence question</a>
+            <a href="#evidence">6. What the STS results show</a>
+            <a href="#limits">7. Structural limitations</a>
+            <a href="#practice">8. Practical recommendations</a>
+            <a href="#notebook">9. Notebook and artifacts</a>
+          </div>
+        </div>
+
+        <h2 id="paper"><span class="n">1.</span>The paper’s proposal</h2>
+        <p>
+          Cosine similarity starts from Cauchy–Schwarz:
+        </p>
+        $$|u^Tv|\leq \|u\|\|v\|.$$
+        <p>
+          Dividing the observed dot product by this upper bound produces a score in $[-1,1]$. Equality requires linear dependence, so a positive score of one means
+          $v=cu$ for some $c>0$. The paper asks whether this bound is unnecessarily loose when the relation of interest is not proportionality but agreement in the ordering of coordinates.
+        </p>
+        <p>
+          Let $u^\uparrow$ and $v^\uparrow$ denote the coordinates sorted in increasing order, and $v^\downarrow$ the reverse ordering. The rearrangement inequality gives the extremal dot products over every coordinate permutation:
+        </p>
+        $$
+          \max_{\pi\in S_d}u^TP_\pi v=(u^\uparrow)^Tv^\uparrow,
+          \qquad
+          \min_{\pi\in S_d}u^TP_\pi v=(u^\uparrow)^Tv^\downarrow.
+        $$
+        <p>Using the relevant signed extremum gives the sign-preserving form</p>
+        $$
+        \operatorname{recos}(u,v)=
+        \begin{cases}
+        \dfrac{u^Tv}{(u^\uparrow)^Tv^\uparrow}, & u^Tv>0,\\[0.9em]
+        \dfrac{u^Tv}{\left|(u^\uparrow)^Tv^\downarrow\right|}, & u^Tv<0,\\[0.5em]
+        0,&u^Tv=0.
+        \end{cases}
+        $$
+        <p>
+          The score reaches $1$ whenever $u$ and $v$ induce the same coordinate ordering, not only when they are proportional. It reaches $-1$ when the orderings are exactly reversed.
+          This is the central extension: perfect similarity becomes <em>ordinal concordance</em>.
+        </p>
+
+        <div class="callout warning">
+          <p><strong>Technical note on signs.</strong> The printed negative-dot-product branch in the manuscript appears sign-inconsistent if its denominator is used without an absolute value: a negative numerator divided by the negative rearrangement minimum becomes positive. The notebook and demos use the sign-preserving convention above, which matches the intended range and the supplied reference-code pattern.</p>
+        </div>
+
+        <p>The same inequality chain also yields a stricter score, called <em>decos</em> in the paper:</p>
+        $$
+        |u^Tv|
+        \leq \langle u^\uparrow,v^{\updownarrow}\rangle
+        \leq \|u\|\|v\|
+        \leq \frac{\|u\|^2+\|v\|^2}{2}.
+        $$
+        <p>Normalizing by each bound gives</p>
+        $$|\operatorname{decos}(u,v)|\leq|\cos(u,v)|\leq|\operatorname{recos}(u,v)|\leq1.$$
+        <p>A smaller valid denominator produces a wider saturation set. Decos saturates at identity, cosine at proportionality, and recos at coordinate-order agreement.</p>
+
+        <div class="demo" data-demo="metric-playground"><p>Interactive metric playground requires JavaScript.</p></div>
+
+        <figure>
+          <a href="artifacts/similarity-cases.png"><img src="artifacts/similarity-cases.png" alt="Comparison of decos cosine and recos on linear nonlinear permuted and random vector relations" /></a>
+          <figcaption>Recos does not detect arbitrary nonlinearity. It detects a specific kind: monotone coordinatewise dependence in the current basis.</figcaption>
+        </figure>
+
+        <h2 id="group"><span class="n">2.</span>Similarity as orbit normalization</h2>
+        <p>
+          The group-theoretic view begins with a general construction. Let a transformation group $G$ act on vectors. Normalize the observed alignment by the best signed alignment between $u$ and the orbit of $v$:
+        </p>
+        $$
+          s_G(u,v)=
+          \frac{u^Tv}
+          {\text{best signed value of }u^T(gv)\text{ over }g\in G}.
+        $$
+        <p>Cosine and recos differ only in the group:</p>
+        <div class="cards">
+          <div class="card"><b>Cosine: $G=O(d)$</b><span>The orbit of $v$ is the sphere of radius $\|v\|$. Its support function is $\|u\|\|v\|$. All common orthogonal changes of basis preserve the score.</span></div>
+          <div class="card"><b>Recos: $G=S_d$</b><span>The orbit contains all coordinate permutations of $v$. Its convex hull is a permutohedron. Only simultaneous coordinate relabelings are guaranteed to preserve the score.</span></div>
+        </div>
+        <p>
+          Every permutation matrix is orthogonal, so $S_d\subset O(d)$. Optimizing over the smaller group cannot produce a larger denominator. This immediately explains the pointwise inequality $|\cos|\leq|\operatorname{recos}|$.
+        </p>
+
+        <figure class="wide">
+          <a href="artifacts/group-orbit-geometry.png"><img src="artifacts/group-orbit-geometry.png" alt="Sphere orbit for cosine and permutohedron orbit for recos" /></a>
+          <figcaption>Cosine uses the support function of a Euclidean ball. Recos uses the support function of a permutohedron. Their difference is a change in orbit geometry.</figcaption>
+        </figure>
+
+        <div class="demo" data-demo="orbit-lab"><p>Interactive orbit demonstration requires JavaScript.</p></div>
+
+        <p>
+          This formulation suggests a larger taxonomy. Choosing diagonal rescalings, signed permutations, block permutations, low-rank transformations, or a learned transformation family would produce other orbit-normalized scores. The mathematical question is then explicit:
+          <em>which group represents nuisance transformations, and which structure should remain observable?</em>
+        </p>
+
+        <h2 id="chambers"><span class="n">3.</span>Weyl chambers and nonlinear monotonicity</h2>
+        <p>
+          The hyperplanes $x_i=x_j$ partition $\mathbb R^d$ into regions indexed by coordinate orderings. In Lie-theoretic language these are the Weyl chambers of the root system $A_{d-1}$, whose Weyl group is $S_d$.
+          Two vectors lie in the same closed chamber exactly when
+        </p>
+        $$
+          (u_i-u_j)(v_i-v_j)\geq0
+          \quad\text{for every }i,j.
+        $$
+        <p>
+          On the positive branch this is the equality condition for the rearrangement bound, hence the equality condition for recos. The interpretation is clean:
+          recos equals one when the identity coordinate matching is already an optimal permutation matching.
+        </p>
+
+        <figure>
+          <a href="artifacts/weyl-chambers.png"><img src="artifacts/weyl-chambers.png" alt="Weyl chambers showing coordinate orderings for the permutation group" /></a>
+          <figcaption>In dimension three, six chambers correspond to the six strict coordinate orderings. Any increasing coordinatewise transform stays in the same chamber.</figcaption>
+        </figure>
+
+        <p>
+          For example, if $v_i=g(u_i)$ with strictly increasing $g$, then every pair of coordinates has the same order. Recos therefore saturates at one even when $g$ is nonlinear.
+          With $U\sim\mathcal N(0,1)$ and $V=U^3$, the large-dimensional limits are
+        </p>
+        $$
+          \operatorname{recos}(U,V)\to1,
+          \qquad
+          \cos(U,V)\to\frac{\mathbb E[U^4]}{\sqrt{\mathbb E[U^2]\mathbb E[U^6]}}
+          =\frac{3}{\sqrt{15}}\approx0.7746.
+        $$
+
+        <figure class="wide">
+          <img src="artifacts/monotone-nonlinearity.gif" alt="Animation showing recos remaining one while cosine changes under monotone nonlinear transformations" />
+          <figcaption>The saturation is ordinal. As the increasing nonlinear transform becomes steeper, cosine falls while recos remains one.</figcaption>
+        </figure>
+
+        <h2 id="probability"><span class="n">4.</span>Random vectors and population limits</h2>
+        <p>
+          A wider saturation set does not automatically imply a new high-dimensional statistical scale. Under independent isotropic directions, cosine has exact mean zero and variance $1/d$; moreover $\sqrt d\,\cos$ converges to a standard normal distribution.
+        </p>
+        <p>
+          For independent vectors with identically distributed symmetric coordinates, recos has the same first-order behavior: zero mean, variance asymptotic to $1/d$, and the same Gaussian limit after multiplication by $\sqrt d$. At finite dimension its magnitude is larger because the permutation-orbit denominator is smaller, but the inflation decreases quickly with $d$.
+        </p>
+
+        <figure class="wide">
+          <a href="artifacts/random-vector-asymptotics.png"><img src="artifacts/random-vector-asymptotics.png" alt="Monte Carlo comparison of cosine and recos for independent Gaussian random vectors across dimensions" /></a>
+          <figcaption>Independent Gaussian null model. Recos is visibly inflated in small dimensions, while both second moments approach the same $1/d$ law.</figcaption>
+        </figure>
+
+        <figure class="wide">
+          <a href="artifacts/random-score-histograms.png"><img src="artifacts/random-score-histograms.png" alt="Histograms of scaled cosine and recos scores in dimensions four and sixty four" /></a>
+          <figcaption>After scaling by $\sqrt d$, the two null distributions become increasingly similar and approach the standard Gaussian shape.</figcaption>
+        </figure>
+
+        <p>
+          The more informative model allows dependence between matching coordinates. Let $(U_i,V_i)$ be i.i.d. pairs with marginal quantile functions $q_F,q_G$, and define the extremal couplings
+        </p>
+        $$
+          c_+(F,G)=\int_0^1q_F(t)q_G(t)\,dt,
+          \qquad
+          c_-(F,G)=-\int_0^1q_F(t)q_G(1-t)\,dt.
+        $$
+        <p>If $\mu=\mathbb E[UV]>0$, then empirical quantile convergence gives</p>
+        $$
+          \operatorname{recos}(U,V)\xrightarrow{p}\frac{\mu}{c_+(F,G)}.
+        $$
+        <p>
+          Cosine normalizes covariance by the Cauchy–Schwarz scale $\sqrt{\mathbb E[U^2]\mathbb E[V^2]}$. Recos normalizes the same covariance by the largest covariance compatible with the two marginal distributions.
+          This is a precise probabilistic interpretation of ordinal saturation.
+        </p>
+
+        <div class="demo" data-demo="random-lab"><p>Interactive random-vector laboratory requires JavaScript.</p></div>
+
+        <h2 id="basis"><span class="n">5.</span>The basis-dependence question</h2>
+        <p>
+          The strongest conceptual objection to recos is also the most interesting empirical question. If embeddings are defined only up to a common orthogonal transformation, then the coordinate axes have no intrinsic meaning. Cosine respects this equivalence:
+        </p>
+        $$\cos(Qu,Qv)=\cos(u,v)\qquad(Q\in O(d)).$$
+        <p>Recos does not:</p>
+        $$\operatorname{recos}(Qu,Qv)\neq\operatorname{recos}(u,v)\quad\text{in general}.$$
+        <p>Its guaranteed invariances are smaller:</p>
+        $$
+          \operatorname{recos}(Pu,Pv)=\operatorname{recos}(u,v),
+          \qquad
+          \operatorname{recos}(au,bv)=\operatorname{sgn}(ab)\operatorname{recos}(u,v),
+        $$
+        <p>for permutation matrices $P$ and nonzero scalars $a,b$.</p>
+
+        <figure class="wide">
+          <a href="artifacts/basis-dependence.png"><img src="artifacts/basis-dependence.png" alt="Cosine remains constant and recos varies under a common orthogonal rotation" /></a>
+          <figcaption>A common rotation preserves the pairwise inner product and both norms, so cosine is fixed. The coordinate rankings change, so recos moves.</figcaption>
+        </figure>
+
+        <figure class="wide">
+          <img src="artifacts/basis-rotation.gif" alt="Animation of cosine and recos under a common rotation of two vectors" />
+          <figcaption>The same pair of geometric vectors receives different recos scores in different orthogonal coordinate systems.</figcaption>
+        </figure>
+
+        <div class="demo" data-demo="rotation-lab"><p>Interactive rotation test requires JavaScript.</p></div>
+
+        <div class="method-card">
+          <h3>Two interpretations of a recos gain</h3>
+          <p>An improvement on a semantic benchmark can mean either of two things.</p>
+          <div class="method-meta">
+            <div><span>privileged basis</span>The embedding model learns reproducible axes whose component ordering carries semantic information.</div>
+            <div><span>coordinate artifact</span>The gain depends on one arbitrary representative of an orthogonally equivalent embedding geometry.</div>
+            <div><span>decisive test</span>Apply common Haar-random rotations to all embeddings and repeat the evaluation.</div>
+          </div>
+        </div>
+
+        <h2 id="evidence"><span class="n">6.</span>What the reported STS results show</h2>
+        <p>
+          The paper evaluates 11 embedding models on seven Semantic Textual Similarity datasets, for 77 model–dataset pairs. It reports that recos exceeds cosine in 71 cases, ties in five, and loses in one.
+          The micro-average improvement is approximately $0.29$ Spearman points on the conventional $\rho\times100$ scale. The gain is modest, but its consistency is notable.
+        </p>
+
+        <figure class="wide">
+          <a href="artifacts/paper-sts-gains.png"><img src="artifacts/paper-sts-gains.png" alt="Reported recos gains over cosine across semantic textual similarity models and datasets" /></a>
+          <figcaption>Values transcribed from the paper’s main results table. CLIP-ViT, DPR, and SPECTER show the largest average gains; one BGE setting is the only reported loss.</figcaption>
+        </figure>
+
+        <div class="demo" data-demo="sts-lab"><p>Interactive STS result explorer requires JavaScript.</p></div>
+
+        <p>
+          These results establish that the ordinal information is not numerically irrelevant in the evaluated embeddings. They do not yet establish that the signal is intrinsic to semantic geometry.
+          The missing experiment is the rotation distribution: evaluate the same datasets after common random orthogonal rotations. If the original basis is privileged, the unrotated performance should be systematically special rather than an arbitrary point in that distribution.
+        </p>
+
+        <h2 id="limits"><span class="n">7.</span>Structural limitations</h2>
+        <h3>7.1 Recos is not automatically a kernel</h3>
+        <p>
+          A Mercer kernel must produce a positive-semidefinite Gram matrix for every finite set of inputs. Recos fails this condition. For
+          $x=(-1,-1)$, $y=(-1,0)$, and $z=(0,-1)$, the recos Gram matrix is
+        </p>
+        $$
+          K=\begin{pmatrix}1&1&1\\1&1&0\\1&0&1\end{pmatrix},
+        $$
+        <p>with eigenvalues $1-\sqrt2$, $1$, and $1+\sqrt2$. The negative eigenvalue means that recos cannot be inserted into kernel methods without modification.</p>
+
+        <figure>
+          <a href="artifacts/kernel-diagnostics.png"><img src="artifacts/kernel-diagnostics.png" alt="Recos Gram matrix with a negative eigenvalue" /></a>
+          <figcaption>A similarity score can be useful without being a positive-semidefinite kernel. The distinction matters for SVMs, kernel PCA, spectral methods, and Gaussian processes.</figcaption>
+        </figure>
+
+        <h3>7.2 One minus recos is not a metric</h3>
+        <p>
+          For the same three vectors, recos$(x,y)=1$, recos$(x,z)=1$, and recos$(y,z)=0$. Thus $d_R=1-\operatorname{recos}$ violates the triangle inequality:
+        </p>
+        $$d_R(y,z)=1>d_R(y,x)+d_R(x,z)=0.$$
+        <p>Perfect ordinal agreement is not necessarily transitive when ties occur.</p>
+
+        <h3>7.3 Sorting is not free</h3>
+        <p>
+          Cosine is $O(d)$. Exact recos requires sorting and is $O(d\log d)$. For individual vectors with dimensions in the hundreds this is usually minor. For billion-scale retrieval, the change is substantial because sorting must be performed or represented in an indexable approximation.
+        </p>
+
+        <h3>7.4 “Nonlinear” should be read narrowly</h3>
+        <p>
+          Recos captures monotone dependence between corresponding coordinates in the chosen basis. It is not invariant to arbitrary nonlinear transformations of the vector space, and it does not directly model curved manifolds, local neighborhoods, or general nonlinear correspondences.
+          Its inductive bias is ordinal, not universally nonlinear.
+        </p>
+
+        <h2 id="practice"><span class="n">8.</span>Practical recommendations</h2>
+        <table>
+          <thead><tr><th>Situation</th><th>Recommendation</th></tr></thead>
+          <tbody>
+            <tr><td>Unit-normalized embeddings and ordinary nearest-neighbor retrieval</td><td>Keep cosine as the baseline. It is cheap, index-friendly, and invariant to common orthogonal reparameterization.</td></tr>
+            <tr><td>Embedding axes have known or reproducible semantics</td><td>Recos is a defensible candidate because coordinate ordering may be meaningful.</td></tr>
+            <tr><td>Benchmark gain is small but consistent</td><td>Run common-rotation, centering, and dimension-scaling tests before interpreting the gain geometrically.</td></tr>
+            <tr><td>Kernel or spectral algorithm</td><td>Inspect the Gram spectrum. Do not assume recos is positive semidefinite.</td></tr>
+            <tr><td>Large retrieval system</td><td>Measure sorting cost and investigate partial sorting, quantile sketches, or learned approximations.</td></tr>
+            <tr><td>Training objective</td><td>Treat recos as an inductive bias. Check gradients near ties and whether axis-specific ordering is stable across seeds.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout secondary">
+          <p><strong>The main experiment I would add.</strong> Train or extract one embedding set, sample many common Haar-random orthogonal matrices $Q$, and evaluate STS with recos$(Qu,Qv)$. Cosine provides a constant control. The location of the original basis inside the resulting recos distribution measures whether its coordinate ordering is special.</p>
+        </div>
+
+        <h2 id="notebook"><span class="n">9.</span>Notebook and artifacts</h2>
+        <p>The companion notebook contains executable versions of the derivations and diagnostics:</p>
+        <div class="cards">
+          <div class="card"><b>Likelihood section</b><span>Gaussian, Laplace, and von Mises–Fisher objectives.</span></div>
+          <div class="card"><b>Group theory</b><span>Orbit maxima, rearrangement verification, permutohedron geometry, and Weyl chambers.</span></div>
+          <div class="card"><b>Probability</b><span>Independent Gaussian nulls, dimension scaling, and monotone paired-coordinate limits.</span></div>
+          <div class="card"><b>Diagnostics</b><span>Orthogonal rotations, non-PSD Gram matrices, triangle-inequality failure, and reported STS gains.</span></div>
+        </div>
+        <p>
+          <a href="artifacts/experiments.ipynb">notebook with all experiments</a> ·
+          <a href="artifacts/group-theoretic-analysis.tex">group-theoretic analysis source</a> ·
+        </p>
+
+        <p>
+          The useful contribution of recos is that the normalization bound can be read as a symmetry assumption. Once that assumption is visible, the comparison becomes more precise:
+          cosine checks whether two vectors point in the same direction while recos looks whether their coordinates make the same ordinal judgments. Which question is appropriate depends on how the representation was constructed and which transformations should leave it unchanged.
+        </p>
+      </article>
+      <footer>
+        Review of Xinbo Ai, <a href="https://arxiv.org/abs/2602.05266"><em>Beyond Cosine Similarity</em></a>, with additional group-theoretic and probabilistic analysis. Synthetic plots and interactive demonstrations are included in the companion notebook.
+      </footer>
+    </div>
+  </body>
+</html>

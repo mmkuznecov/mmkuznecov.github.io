@@ -1,0 +1,762 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{xcolor}
+
+\geometry{margin=2.35cm}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Sd}{S_d}
+\newcommand{\Od}{O(d)}
+\newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\recos}{\operatorname{recos}}
+\newcommand{\cosim}{\operatorname{cos}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\Perm}{\operatorname{Perm}}
+\newcommand{\conv}{\operatorname{conv}}
+\newcommand{\diag}{\operatorname{diag}}
+
+\title{\textbf{A Group-Theoretic and Probabilistic Analysis of Recos}\\
+\large Symmetry groups, random-vector expectations, asymptotics, and structural properties}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report studies the proposed rearrangement-based cosine similarity, recos, from two complementary viewpoints. First, recos is interpreted through the action of the symmetric group $S_d$ on vector coordinates, while cosine similarity is obtained from optimization over the orthogonal group $O(d)$. This exposes recos as an orbit-normalized alignment score and clarifies its Weyl-chamber geometry, invariance group, stabilizers, and basis dependence. Second, the report computes exact expectations for cosine similarity under isotropic random vectors, exact first and second moments of permutation-group orbit averages, and large-dimensional limits for recos based on order statistics. For independent symmetric random vectors, both cosine and recos have zero mean, variance asymptotic to $1/d$, and the same Gaussian first-order limit, although $|\recos|\geq |\cosim|$ pointwise at finite dimension. For general paired coordinates, recos converges to covariance normalized by the extremal covariance allowed by the two marginal distributions, explaining why it saturates under nonlinear monotone dependence. Additional results show that recos is neither a positive-semidefinite kernel nor a metric-derived similarity in general.
+\end{abstract}
+
+\tableofcontents
+
+\section{Scope and a sign-consistent definition}
+
+Let $u,v\in\R^d$, and write
+\begin{equation}
+    S(u,v)=\ip{u}{v}.
+\end{equation}
+Let $P_\pi$ denote the permutation matrix associated with $\pi\in\Sd$. Define the two orbit extrema
+\begin{align}
+    M_+(u,v)
+    &=\max_{\pi\in\Sd}\ip{u}{P_\pi v}
+      =\ip{u^\uparrow}{v^\uparrow}, \\
+    M_-(u,v)
+    &=-\min_{\pi\in\Sd}\ip{u}{P_\pi v}
+      =-\ip{u^\uparrow}{v^\downarrow}.
+\end{align}
+The equalities are the rearrangement inequality. Both $M_+$ and $M_-$ are nonnegative whenever the corresponding extremum has the expected sign.
+
+\begin{definition}[Sign-preserving recos]
+For nondegenerate pairs, define
+\begin{equation}
+\recos(u,v)=
+\begin{cases}
+\displaystyle \frac{S(u,v)}{M_+(u,v)}, & S(u,v)>0,\\[1.0em]
+\displaystyle \frac{S(u,v)}{M_-(u,v)}, & S(u,v)<0,\\[0.6em]
+0, & S(u,v)=0.
+\end{cases}
+\label{eq:recos-definition}
+\end{equation}
+\end{definition}
+
+This is the sign-preserving form implemented by the reference code. It is worth stating explicitly because the printed negative-dot-product branch in the original manuscript has a sign inconsistency: dividing a negative dot product by the negative rearrangement minimum would produce a positive score. Equation~\eqref{eq:recos-definition} instead divides by the magnitude of the relevant extremum.
+
+Cosine similarity is
+\begin{equation}
+    \cosim(u,v)=\frac{\ip{u}{v}}{\norm{u}\norm{v}}.
+\end{equation}
+
+\section{The group action behind recos}
+
+\subsection{Orbit normalization}
+
+The symmetric group $\Sd$ acts on $\R^d$ by coordinate permutations. The orbit of $v$ is
+\begin{equation}
+    \mathcal{O}_{\Sd}(v)=\{P_\pi v:\pi\in\Sd\}.
+\end{equation}
+The recos denominator is the best alignment of $u$ with this orbit, using either the maximum or the magnitude of the minimum according to the sign of the original dot product.
+
+For comparison, the orthogonal group $\Od$ acts by rotations and reflections. Its orbit is the sphere of radius $\norm{v}$, and
+\begin{equation}
+    \sup_{Q\in\Od}\ip{u}{Qv}=\norm{u}\norm{v}.
+\end{equation}
+Thus cosine and recos belong to the same general family:
+\begin{equation}
+    s_G(u,v)
+    =
+    \frac{\ip{u}{v}}
+    {\text{best signed alignment of $u$ with the orbit $Gv$}}.
+\end{equation}
+The difference is the transformation group used in the denominator:
+\begin{equation}
+    G=\Od \quad\text{for cosine},
+    \qquad
+    G=\Sd \quad\text{for recos}.
+\end{equation}
+
+Because every permutation matrix is orthogonal,
+\begin{equation}
+    \Sd\subset\Od.
+\end{equation}
+Optimizing over the smaller group gives a no-larger denominator. Consequently,
+\begin{equation}
+    |\cosim(u,v)|\leq |\recos(u,v)|\leq 1
+\end{equation}
+whenever the sign-consistent denominators are nonzero.
+
+\subsection{Orbit polytopes and support functions}
+
+The convex hull of the permutation orbit is the permutohedron
+\begin{equation}
+    \Perm(v)=\conv\{P_\pi v:\pi\in\Sd\}.
+\end{equation}
+Its support function is
+\begin{equation}
+    h_{\Perm(v)}(u)
+    =\max_{x\in\Perm(v)}\ip{u}{x}
+    =M_+(u,v).
+\end{equation}
+Therefore the positive branch of recos is
+\begin{equation}
+    \recos(u,v)=\frac{\ip{u}{v}}{h_{\Perm(v)}(u)}.
+\end{equation}
+Cosine uses the support function of a Euclidean ball; recos uses the support function of a permutohedron. The two metrics therefore impose different normalization geometries rather than merely different scalar formulas.
+
+\subsection{Weyl chambers and saturation}
+
+The hyperplanes
+\begin{equation}
+    x_i=x_j,
+    \qquad 1\leq i<j\leq d,
+\end{equation}
+partition $\R^d$ into Weyl chambers of the root system $A_{d-1}$. Each open chamber corresponds to one strict ordering of coordinates,
+\begin{equation}
+    x_{\pi(1)}<x_{\pi(2)}<\cdots<x_{\pi(d)}.
+\end{equation}
+The Weyl group is $\Sd$.
+
+\begin{proposition}[Saturation]
+Assume the relevant denominator is nonzero.
+\begin{enumerate}[label=(\roman*)]
+    \item $\recos(u,v)=1$ if and only if the identity alignment is a maximizer, equivalently
+    \begin{equation}
+        (u_i-u_j)(v_i-v_j)\geq 0
+        \quad\text{for all }i,j.
+    \end{equation}
+    Thus $u$ and $v$ lie in the same closed Weyl chamber.
+    \item $\recos(u,v)=-1$ if and only if the identity alignment is a minimizer, equivalently
+    \begin{equation}
+        (u_i-u_j)(v_i-v_j)\leq 0
+        \quad\text{for all }i,j.
+    \end{equation}
+    Thus their coordinate orderings are reversed.
+\end{enumerate}
+\end{proposition}
+
+If a vector has coordinate multiplicities $m_1,\ldots,m_k$, its stabilizer is the Young subgroup
+\begin{equation}
+    \operatorname{Stab}(v)\cong S_{m_1}\times\cdots\times S_{m_k},
+\end{equation}
+and its orbit size is
+\begin{equation}
+    |\mathcal{O}_{\Sd}(v)|
+    =\frac{d!}{m_1!\cdots m_k!}.
+\end{equation}
+Ties therefore correspond to chamber boundaries and nontrivial stabilizers.
+
+\section{Exact group averages}
+
+\subsection{Haar averages over the orthogonal group}
+
+Let $Q$ be Haar-uniform on $\Od$, with fixed nonzero $u,v\in\R^d$. Then
+\begin{equation}
+    \E_Q\ip{u}{Qv}=0,
+\end{equation}
+and rotational symmetry gives
+\begin{equation}
+    \E_Q\left[\ip{u}{Qv}^2\right]
+    =\frac{\norm{u}^2\norm{v}^2}{d}.
+\end{equation}
+Consequently,
+\begin{equation}
+    \E_Q\left[\cosim(u,Qv)\right]=0,
+    \qquad
+    \Var_Q\left(\cosim(u,Qv)\right)=\frac{1}{d}.
+\end{equation}
+The $1/d$ variance is a direct reflection of the $d$-dimensional irreducible geometry of the sphere.
+
+\subsection{Uniform averages over the permutation group}
+
+Let $\pi$ be uniform on $\Sd$, and define
+\begin{equation}
+    Z_\pi=\ip{u}{P_\pi v}.
+\end{equation}
+Write
+\begin{equation}
+    \bar u=\frac{1}{d}\one^\top u,
+    \qquad
+    \bar v=\frac{1}{d}\one^\top v,
+\end{equation}
+and
+\begin{equation}
+    u_c=u-\bar u\one,
+    \qquad
+    v_c=v-\bar v\one.
+\end{equation}
+
+The Reynolds operator of the permutation action is
+\begin{equation}
+    \E_\pi[P_\pi]=\frac{1}{d}\one\one^\top,
+\end{equation}
+which is the orthogonal projection onto the trivial representation $\operatorname{span}\{\one\}$.
+
+\begin{theorem}[Exact permutation moments]
+For $d>1$,
+\begin{align}
+    \E_\pi[Z_\pi]
+    &=d\bar u\bar v, \\
+    \Var_\pi(Z_\pi)
+    &=\frac{\norm{u_c}^2\norm{v_c}^2}{d-1}.
+\end{align}
+\end{theorem}
+
+\begin{proof}
+The mean follows from the Reynolds operator:
+\begin{equation}
+\E_\pi[Z_\pi]
+=u^\top\E_\pi[P_\pi]v
+=d\bar u\bar v.
+\end{equation}
+The centered subspace $\one^\perp$ is the standard $(d-1)$-dimensional representation of $\Sd$. Averaging $P_\pi v_c v_c^\top P_\pi^\top$ over the group must produce a scalar multiple of the identity on $\one^\perp$. Matching the trace gives
+\begin{equation}
+    \E_\pi[P_\pi v_c v_c^\top P_\pi^\top]
+    =\frac{\norm{v_c}^2}{d-1}
+    \left(I-\frac{1}{d}\one\one^\top\right).
+\end{equation}
+Taking the quadratic form in $u_c$ proves the variance formula.
+\end{proof}
+
+For centered vectors, a random relative permutation therefore has mean zero and variance
+\begin{equation}
+    \Var_\pi(Z_\pi)
+    =\frac{\norm{u}^2\norm{v}^2}{d-1}.
+\end{equation}
+The denominator $d-1$, rather than $d$, is explained by the decomposition
+\begin{equation}
+    \R^d=\operatorname{span}\{\one\}\oplus\one^\perp.
+\end{equation}
+After centering, only the standard representation of dimension $d-1$ remains.
+
+\section{Exact expectations for cosine similarity}
+
+Let $U,V$ be independent isotropic random vectors in $\R^d$, with directions uniform on the unit sphere. This includes independent standard Gaussian vectors after normalization.
+
+For $d\geq2$, the cosine
+\begin{equation}
+    C=\cosim(U,V)
+\end{equation}
+has density
+\begin{equation}
+    f_d(c)
+    =
+    \frac{\Gamma(d/2)}{\sqrt{\pi}\,\Gamma((d-1)/2)}
+    (1-c^2)^{(d-3)/2},
+    \qquad -1<c<1.
+\end{equation}
+Therefore
+\begin{align}
+    \E[C]&=0,\\
+    \E[C^2]&=\frac{1}{d},\\
+    \E[|C|]
+    &=
+    \frac{\Gamma(d/2)}{\sqrt{\pi}\,\Gamma((d+1)/2)}.
+\end{align}
+As $d\to\infty$,
+\begin{equation}
+    \E[|C|]
+    =\sqrt{\frac{2}{\pi d}}\left(1+O(d^{-1})\right),
+\end{equation}
+and
+\begin{equation}
+    \sqrt{d}\,C\xrightarrow{d}\mathcal{N}(0,1).
+\end{equation}
+These formulas quantify the familiar concentration of random directions near orthogonality.
+
+\section{Order-statistic formulas for the recos denominator}
+
+Let
+\begin{equation}
+    U=(U_1,\ldots,U_d),
+    \qquad
+    V=(V_1,\ldots,V_d),
+\end{equation}
+where the $U_i$ are i.i.d. from a distribution $F$, the $V_i$ are i.i.d. from $G$, and the two vectors are independent. Let $U_{(i)}$ and $V_{(i)}$ denote order statistics.
+
+The positive rearrangement extremum is
+\begin{equation}
+    M_{+,d}=\sum_{i=1}^d U_{(i)}V_{(i)}.
+\end{equation}
+Independence of the two vectors gives the exact expectation
+\begin{equation}
+    \E[M_{+,d}]
+    =\sum_{i=1}^d
+    \E[U_{(i)}]\E[V_{(i)}].
+\label{eq:expected-max}
+\end{equation}
+For $F=G$, write $m_{i:d}=\E[U_{(i)}]$. Then
+\begin{equation}
+    \E[M_{+,d}]=\sum_{i=1}^d m_{i:d}^2.
+\end{equation}
+If $F$ has mean zero and variance $\sigma^2$, then
+\begin{equation}
+    \sum_{i=1}^d \E[U_{(i)}^2]=d\sigma^2,
+\end{equation}
+so
+\begin{equation}
+    \E[M_{+,d}]
+    =d\sigma^2-
+    \sum_{i=1}^d\Var(U_{(i)}).
+\label{eq:finite-denominator-gap}
+\end{equation}
+Equation~\eqref{eq:finite-denominator-gap} gives an exact finite-dimensional reason why the expected rearrangement denominator is below the natural quadratic scale $d\sigma^2$.
+
+For a symmetric distribution, $m_{d+1-i:d}=-m_{i:d}$. Hence the expected magnitude of the negative extremum is the same:
+\begin{equation}
+    \E[M_{-,d}]
+    =\sum_{i=1}^d m_{i:d}^2.
+\end{equation}
+
+As a simple exact example, for $d=2$ and standard Gaussian coordinates,
+\begin{equation}
+    \E[U_{(1)}]=-\frac{1}{\sqrt{\pi}},
+    \qquad
+    \E[U_{(2)}]=\frac{1}{\sqrt{\pi}},
+\end{equation}
+so
+\begin{equation}
+    \E[M_{+,2}]=\E[M_{-,2}]=\frac{2}{\pi}\approx0.63662.
+\end{equation}
+
+\section{Large-dimensional limit of recos}
+
+\subsection{General paired-coordinate model}
+
+A more informative model allows dependence between matching coordinates. Let
+\begin{equation}
+    (U_i,V_i),\qquad i=1,\ldots,d,
+\end{equation}
+be i.i.d. pairs with continuous marginal distributions $F$ and $G$, finite second moments, and quantile functions $q_F$ and $q_G$.
+
+Define the extremal marginal couplings
+\begin{align}
+    c_+(F,G)
+    &=\int_0^1 q_F(t)q_G(t)\,dt,\\
+    c_-(F,G)
+    &=-\int_0^1 q_F(t)q_G(1-t)\,dt.
+\end{align}
+For centered nondegenerate marginals, both constants are nonnegative, and usually positive. The rearrangement inequality identifies $c_+$ as the largest possible second cross-moment and $-c_-$ as the smallest possible second cross-moment among all coordinate pairings with those marginals.
+
+Let
+\begin{equation}
+    \mu=\E[UV].
+\end{equation}
+By the law of large numbers and convergence of empirical quantile functions,
+\begin{align}
+    \frac{1}{d}\sum_{i=1}^d U_iV_i
+    &\xrightarrow{p}\mu,\\
+    \frac{M_{+,d}}{d}
+    &\xrightarrow{p}c_+(F,G),\\
+    \frac{M_{-,d}}{d}
+    &\xrightarrow{p}c_-(F,G).
+\end{align}
+Therefore, if $\mu>0$,
+\begin{equation}
+    \recos(U,V)
+    \xrightarrow{p}
+    \frac{\mu}{c_+(F,G)},
+\end{equation}
+and if $\mu<0$,
+\begin{equation}
+    \recos(U,V)
+    \xrightarrow{p}
+    \frac{\mu}{c_-(F,G)}.
+\end{equation}
+
+For centered variables, cosine converges to the Pearson correlation:
+\begin{equation}
+    \cosim(U,V)
+    \xrightarrow{p}
+    \frac{\E[UV]}
+    {\sqrt{\E[U^2]\E[V^2]}}.
+\end{equation}
+Thus recos and cosine normalize the same empirical covariance by different population bounds:
+\begin{itemize}[leftmargin=2em]
+    \item cosine uses the Cauchy--Schwarz bound;
+    \item recos uses the extremal covariance compatible with the two marginal distributions.
+\end{itemize}
+
+This gives a precise probabilistic meaning to the claim that recos captures nonlinear monotone dependence.
+
+\subsection{Monotone nonlinear example}
+
+Let $U\sim\mathcal{N}(0,1)$ and let
+\begin{equation}
+    V=U^3.
+\end{equation}
+The relationship is strictly increasing but not linear. Since the coupling is comonotone,
+\begin{equation}
+    c_+(F,G)=\E[UV]=\E[U^4]=3,
+\end{equation}
+so
+\begin{equation}
+    \recos(U,V)\xrightarrow{p}1.
+\end{equation}
+By contrast,
+\begin{equation}
+    \cosim(U,V)
+    \xrightarrow{p}
+    \frac{\E[U^4]}
+    {\sqrt{\E[U^2]\E[U^6]}}
+    =\frac{3}{\sqrt{15}}
+    \approx0.77460.
+\end{equation}
+The example cleanly separates ordinal saturation from linear correlation.
+
+\subsection{Jointly Gaussian example}
+
+Suppose $(U,V)$ is centered bivariate Gaussian with unit variances and correlation $\rho$. Both marginals are standard Gaussian, so
+\begin{equation}
+    c_+=c_-=1.
+\end{equation}
+Consequently,
+\begin{equation}
+    \recos(U,V)\xrightarrow{p}\rho,
+    \qquad
+    \cosim(U,V)\xrightarrow{p}\rho.
+\end{equation}
+For purely elliptical linear dependence, recos has no different first-order population target.
+
+\section{Independent random vectors: expectations and asymptotics}
+
+Assume now that $U_i$ and $V_i$ are independent, centered, and have variances $\sigma_F^2$ and $\sigma_G^2$. Then
+\begin{equation}
+    \E[U_iV_i]=0,
+\end{equation}
+so both similarities converge to zero.
+
+The numerator satisfies
+\begin{equation}
+    \frac{1}{\sqrt{d}\,\sigma_F\sigma_G}
+    \sum_{i=1}^d U_iV_i
+    \xrightarrow{d}\mathcal{N}(0,1)
+\end{equation}
+under standard Lindeberg conditions.
+
+The recos limit depends on the two rearrangement constants. If $Z\sim\mathcal{N}(0,1)$, then
+\begin{equation}
+    \sqrt{d}\,\recos(U,V)
+    \xrightarrow{d}
+    \begin{cases}
+    \displaystyle \frac{\sigma_F\sigma_G}{c_+}Z,
+    & Z>0,\\[0.8em]
+    \displaystyle \frac{\sigma_F\sigma_G}{c_-}Z,
+    & Z<0.
+    \end{cases}
+\label{eq:piecewise-limit}
+\end{equation}
+Assuming uniform integrability, Equation~\eqref{eq:piecewise-limit} gives
+\begin{align}
+    \E[\recos]
+    &=
+    \frac{\sigma_F\sigma_G}{\sqrt{2\pi d}}
+    \left(\frac{1}{c_+}-\frac{1}{c_-}\right)
+    +o(d^{-1/2}),\\
+    \E[|\recos|]
+    &=
+    \frac{\sigma_F\sigma_G}{\sqrt{2\pi d}}
+    \left(\frac{1}{c_+}+\frac{1}{c_-}\right)
+    +o(d^{-1/2}),\\
+    \E[\recos^2]
+    &=
+    \frac{\sigma_F^2\sigma_G^2}{2d}
+    \left(\frac{1}{c_+^2}+\frac{1}{c_-^2}\right)
+    +o(d^{-1}).
+\end{align}
+
+\subsection{Identically distributed symmetric coordinates}
+
+If $F=G$ is symmetric about zero with variance $\sigma^2$, then
+\begin{equation}
+    q_F(1-t)=-q_F(t),
+\end{equation}
+so
+\begin{equation}
+    c_+=c_-=\int_0^1q_F(t)^2\,dt=\sigma^2.
+\end{equation}
+Therefore
+\begin{equation}
+    \sqrt{d}\,\recos(U,V)
+    \xrightarrow{d}\mathcal{N}(0,1),
+\end{equation}
+with
+\begin{align}
+    \E[\recos]&=0,\\
+    \E[|\recos|]&\sim\sqrt{\frac{2}{\pi d}},\\
+    \E[\recos^2]&\sim\frac{1}{d}.
+\end{align}
+The mean is exactly zero for every $d$ because replacing $V$ by $-V$ preserves its distribution and changes the sign of recos.
+
+Cosine has the same first-order limit. In fact,
+\begin{equation}
+    \frac{\recos(U,V)}{\cosim(U,V)}
+    \xrightarrow{p}1
+\end{equation}
+away from the zero-numerator event, since both denominators divided by $d$ converge to $\sigma^2$. Hence
+\begin{equation}
+    \recos(U,V)-\cosim(U,V)=o_p(d^{-1/2}).
+\end{equation}
+
+This is an important null-model conclusion:
+
+\begin{quote}
+For independent vectors with exchangeable symmetric coordinates, recos is larger in magnitude at finite dimension but has the same leading high-dimensional random geometry as cosine similarity.
+\end{quote}
+
+\section{Finite-dimensional Gaussian comparison}
+
+The following table compares exact cosine moments with Monte Carlo estimates for recos under independent standard Gaussian vectors. The sign-preserving definition in Equation~\eqref{eq:recos-definition} was used. The recos mean was numerically indistinguishable from zero in every case.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{rcccc}
+\toprule
+$d$
+& $\E|\cosim|$ exact
+& $\E|\recos|$ MC
+& $\E[\cosim^2]=1/d$
+& $\E[\recos^2]$ MC\\
+\midrule
+2   & 0.636620 & 0.890908 & 0.500000 & 0.851903\\
+4   & 0.424413 & 0.568989 & 0.250000 & 0.421384\\
+8   & 0.291026 & 0.348834 & 0.125000 & 0.176026\\
+16  & 0.202610 & 0.225064 & 0.062500 & 0.076493\\
+32  & 0.142153 & 0.150880 & 0.031250 & 0.035099\\
+64  & 0.100126 & 0.103323 & 0.015625 & 0.016617\\
+128 & 0.070662 & 0.072111 & 0.007812 & 0.008128\\
+\bottomrule
+\end{tabular}
+\caption{Independent Gaussian null model. Monte Carlo sample counts ranged from $2\times10^5$ to $8\times10^5$ per dimension.}
+\end{table}
+
+The gap is substantial in very low dimension and decreases quickly. This is consistent with the pointwise inequality $|\recos|\geq|\cosim|$ and the asymptotic ratio $\recos/\cosim\to1$.
+
+\section{Further structural properties}
+
+\subsection{Symmetry and invariance}
+
+For nondegenerate pairs:
+\begin{align}
+    \recos(u,v)&=\recos(v,u),\\
+    \recos(Pu,Pv)&=\recos(u,v)
+    \qquad(P\text{ a permutation matrix}),\\
+    \recos(au,bv)&=\sgn(ab)\recos(u,v)
+    \qquad(a,b\neq0).
+\end{align}
+Thus recos is invariant under simultaneous coordinate relabeling and positive rescaling of either vector.
+
+It is not invariant under a general common orthogonal transformation:
+\begin{equation}
+    \recos(Qu,Qv)\neq\recos(u,v)
+\end{equation}
+in general, even though
+\begin{equation}
+    \cosim(Qu,Qv)=\cosim(u,v).
+\end{equation}
+Recos therefore depends on the selected coordinate basis.
+
+Adding constants preserves coordinate order but not the numerical score:
+\begin{equation}
+    \recos(u+a\one,v+b\one)
+    \neq\recos(u,v)
+\end{equation}
+in general. This motivates centering when the trivial representation $\operatorname{span}\{\one\}$ is not semantically meaningful.
+
+\subsection{Not a positive-semidefinite kernel}
+
+A similarity function used as a kernel must generate a positive-semidefinite Gram matrix for every finite set of inputs. Recos fails this property.
+
+Consider
+\begin{equation}
+    x=(-1,-1),
+    \qquad
+    y=(-1,0),
+    \qquad
+    z=(0,-1).
+\end{equation}
+Their recos Gram matrix is
+\begin{equation}
+    K=
+    \begin{pmatrix}
+    1&1&1\\
+    1&1&0\\
+    1&0&1
+    \end{pmatrix}.
+\end{equation}
+Its eigenvalues are
+\begin{equation}
+    1-\sqrt{2},\quad 1,\quad 1+\sqrt{2},
+\end{equation}
+so $K$ has a negative eigenvalue. Therefore recos cannot be inserted into kernel methods without additional modification.
+
+\subsection{Not a metric-derived similarity}
+
+The common conversion
+\begin{equation}
+    d_R(u,v)=1-\recos(u,v)
+\end{equation}
+does not define a metric. For the same vectors,
+\begin{equation}
+    \recos(x,y)=1,
+    \qquad
+    \recos(x,z)=1,
+    \qquad
+    \recos(y,z)=0.
+\end{equation}
+Hence
+\begin{equation}
+    d_R(y,z)=1
+    >d_R(y,x)+d_R(x,z)=0,
+\end{equation}
+violating the triangle inequality. The failure arises because maximal ordinal agreement is not transitive when ties are present.
+
+\subsection{Basis dependence as the central empirical issue}
+
+The natural invariance group of ordinary Euclidean embeddings is often $O(d)$: a common orthogonal change of basis preserves all pairwise inner products and cosine similarities. Recos instead retains only the much smaller simultaneous-permutation symmetry.
+
+Therefore an empirical gain from recos can have two interpretations:
+\begin{enumerate}[leftmargin=2em]
+    \item the learned model creates a privileged coordinate basis carrying stable ordinal information;
+    \item the gain is a basis-specific artifact that disappears under an equivalent orthogonal reparameterization.
+\end{enumerate}
+A decisive test is to apply common Haar-random orthogonal rotations to all embeddings. Cosine scores remain unchanged, while recos scores generally move. The distribution of STS performance over random rotations directly measures how much of the reported gain is intrinsic and how much depends on the original basis.
+
+\section{Implications for embedding analysis}
+
+The group-theoretic and probabilistic results suggest the following interpretation.
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Under an exchangeable independent null model, recos does not create a new high-dimensional scale.} Both similarities are $O_p(d^{-1/2})$, have variance asymptotic to $1/d$, and converge to the same Gaussian limit.
+
+    \item \textbf{The finite-dimensional inflation of recos is real but predictable.} It follows from normalization by a smaller orbit extremum. The inflation is strongest at low dimension and vanishes asymptotically for identical symmetric coordinate marginals.
+
+    \item \textbf{The genuinely different regime is nonlinear dependence across matching coordinates.} In the i.i.d. paired-coordinate model, recos converges to covariance divided by the extremal covariance allowed by the marginals. It reaches $1$ for increasing deterministic relationships even when Pearson correlation is below $1$.
+
+    \item \textbf{The semantic question is a symmetry question.} Recos assumes that coordinate permutations are the relevant orbit operations and that the original coordinate labels carry meaningful alignment. Cosine assumes that only angular geometry matters and remains invariant under the larger group $O(d)$.
+
+    \item \textbf{Statistical significance alone does not settle the geometry.} A small but consistent benchmark gain should be accompanied by rotation tests, centering tests, dimension scaling, and analysis of coordinate exchangeability.
+\end{enumerate}
+
+\section{Recommended mathematical experiments}
+
+A focused empirical program should include:
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Dimension scaling under controlled distributions.} Verify the $1/d$ second-moment law and the convergence $\recos/\cosim\to1$ for independent Gaussian, Laplace, and other symmetric coordinate laws.
+
+    \item \textbf{Monotone nonlinear paired models.} Compare the population limits for $V=g(U)+\varepsilon$ with increasing nonlinear $g$, varying noise levels, and fixed marginals.
+
+    \item \textbf{Random orthogonal rotations of real embeddings.} Measure the distribution of recos-based STS correlations across rotations while confirming cosine invariance.
+
+    \item \textbf{Permutation null tests.} Randomly permute coordinates of one embedding in each pair and compare the empirical score variance with
+    \begin{equation}
+        \frac{\norm{u_c}^2\norm{v_c}^2}{d-1}.
+    \end{equation}
+
+    \item \textbf{Centering and trivial-representation removal.} Compare raw recos with recos applied to $u_c$ and $v_c$ to determine whether coordinate means contribute materially to the gain.
+
+    \item \textbf{Kernel diagnostics.} If recos is used in spectral or kernel algorithms, inspect Gram-matrix eigenvalues rather than assuming positive semidefiniteness.
+\end{enumerate}
+
+\section{Conclusion}
+
+Recos has a clean group-theoretic interpretation: it normalizes an observed coordinate alignment by an extremal alignment over the permutation orbit generated by $S_d$. Cosine similarity is the analogous construction over the orthogonal orbit generated by $O(d)$. This makes their difference a choice of symmetry group and orbit geometry.
+
+For isotropic random directions, cosine has exact mean zero, variance $1/d$, and a known beta-type density. For independent symmetric random vectors, recos also has exact mean zero, variance asymptotic to $1/d$, and the same Gaussian first-order limit. Its larger finite-dimensional magnitude is a normalization effect that decreases with dimension.
+
+The stronger distinction appears when coordinate pairs have nonlinear monotone dependence. In a large-dimensional paired-coordinate model, recos converges to the observed covariance divided by the largest or smallest covariance compatible with the marginal distributions. This yields saturation for monotone nonlinear relationships and provides a precise probabilistic counterpart to the Weyl-chamber picture.
+
+The main unresolved issue is basis dependence. Recos is invariant under simultaneous permutations but not under general orthogonal changes of basis. Whether this is a feature or an artifact depends on whether neural embedding coordinates form a privileged, reproducible basis. Random-rotation experiments are therefore essential to any strong claim that recos captures intrinsic semantic geometry.
+
+\appendix
+
+\section{Minimal Monte Carlo implementation}
+
+The following NumPy-style pseudocode reproduces the Gaussian comparison table.
+
+\begin{verbatim}
+import numpy as np
+
+
+def recos_batch(U, V):
+    dot = np.einsum("ij,ij->i", U, V)
+    Us = np.sort(U, axis=1)
+    Vs = np.sort(V, axis=1)
+
+    max_dot = np.einsum("ij,ij->i", Us, Vs)
+    min_dot = np.einsum("ij,ij->i", Us, Vs[:, ::-1])
+
+    denom = np.where(dot >= 0, np.abs(max_dot), np.abs(min_dot))
+    return np.divide(dot, denom, out=np.zeros_like(dot), where=denom > 0)
+
+
+def experiment(d, n, seed=12345):
+    rng = np.random.default_rng(seed)
+    U = rng.standard_normal((n, d))
+    V = rng.standard_normal((n, d))
+
+    dot = np.einsum("ij,ij->i", U, V)
+    cosine = dot / (np.linalg.norm(U, axis=1) *
+                    np.linalg.norm(V, axis=1))
+    r = recos_batch(U, V)
+
+    return {
+        "mean_cos": cosine.mean(),
+        "mean_abs_cos": np.abs(cosine).mean(),
+        "mean_cos_sq": np.mean(cosine ** 2),
+        "mean_recos": r.mean(),
+        "mean_abs_recos": np.abs(r).mean(),
+        "mean_recos_sq": np.mean(r ** 2),
+    }
+\end{verbatim}
+
+\end{document}

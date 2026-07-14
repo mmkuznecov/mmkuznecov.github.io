@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New post — authoring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0e1116;
+        --panel: #151a21;
+        --line: #222a35;
+        --fg: #d7dde6;
+        --muted: #8a94a3;
+        --accent: #4aa3ff;
+        --accent2: #e0a458;
+        --green: #2a9d8f;
+        --red: #d1495b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-weight: 300;
+        line-height: 1.6;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        justify-content: center;
+        padding: 44px 20px 90px;
+      }
+      .wrap { width: 100%; max-width: 760px; }
+      h1 { font-size: 24px; font-weight: 700; margin: 0 0 2px; letter-spacing: -0.3px; }
+      .lede { color: var(--muted); font-size: 13.5px; margin: 0 0 28px; }
+      a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; }
+      a:hover { border-color: var(--accent); }
+
+      section {
+        margin: 0 0 20px;
+        padding: 18px 20px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+      h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--accent);
+        font-weight: 500;
+        margin: 0 0 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      h2 .n { color: var(--accent2); font-weight: 700; }
+      h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+      label.field { display: block; margin-bottom: 14px; }
+      label.field:last-child { margin-bottom: 0; }
+      .lab { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+      .lab .req { color: var(--accent2); }
+      .hint { color: var(--muted); font-size: 11.5px; margin-top: 4px; }
+      input[type="text"], input[type="date"], textarea {
+        width: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 8px 10px;
+        font: inherit;
+        font-size: 13.5px;
+      }
+      input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+      textarea { resize: vertical; }
+      textarea#htmlText { min-height: 200px; font-size: 12.5px; line-height: 1.5; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; }
+      .row > * { flex: 1 1 200px; }
+
+      .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+      .seg button {
+        font: inherit; font-size: 13px; cursor: pointer;
+        color: var(--muted); background: var(--bg); border: none; padding: 6px 14px;
+      }
+      .seg button + button { border-left: 1px solid var(--line); }
+      .seg button.on { color: var(--bg); background: var(--accent); }
+
+      .btn {
+        font: inherit; font-size: 13px; color: var(--fg);
+        background: var(--bg); border: 1px solid var(--line);
+        border-radius: 6px; padding: 7px 14px; cursor: pointer;
+      }
+      .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+      .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .btn.primary { border-color: var(--accent); color: var(--accent); }
+      .btn.go { border-color: var(--green); color: var(--green); }
+      .btn.go:hover:not(:disabled) { background: var(--green); color: var(--bg); }
+
+      input[type="file"] { font: inherit; font-size: 12.5px; color: var(--muted); }
+      input[type="file"]::file-selector-button {
+        font: inherit; font-size: 12.5px; margin-right: 10px;
+        color: var(--fg); background: var(--bg);
+        border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer;
+      }
+
+      .files { list-style: none; margin: 12px 0 0; padding: 0; }
+      .files li {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 12.5px; padding: 4px 0; border-bottom: 1px solid var(--line);
+      }
+      .files li:last-child { border-bottom: none; }
+      .files .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .files .x { color: var(--muted); cursor: pointer; border: none; background: none; font: inherit; }
+      .files .x:hover { color: var(--red); }
+      .chip { font-size: 10.5px; padding: 1px 7px; border-radius: 20px; border: 1px solid var(--line); }
+      .chip.used { color: var(--green); border-color: var(--green); }
+      .chip.unused { color: var(--accent2); border-color: var(--accent2); }
+
+      .analysis { margin-top: 14px; }
+      .box { border-radius: 8px; padding: 10px 14px; margin-top: 10px; font-size: 12.5px; border: 1px solid var(--line); }
+      .box.ok { border-left: 3px solid var(--green); }
+      .box.warn { border-left: 3px solid var(--accent2); }
+      .box.err { border-left: 3px solid var(--red); }
+      .box.info { border-left: 3px solid var(--accent); }
+      .box b { color: var(--fg); font-weight: 500; }
+      .box code { color: var(--accent2); }
+      .box ul { margin: 6px 0 0; padding-left: 18px; }
+
+      .frame-wrap { display: none; margin-top: 14px; }
+      iframe#frame {
+        width: 100%; height: 620px; border: 1px solid var(--line); border-radius: 8px; background: #fff;
+      }
+      #status { margin-top: 14px; font-size: 12.5px; }
+      #status .line { padding: 4px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+      #status .line:last-child { border-bottom: none; }
+      #status .line.err { color: var(--red); }
+      #status .line.ok { color: var(--green); }
+      .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Add a new post</h1>
+      <p class="lede">
+        Writes into <code>posts/</code> and updates <code>posts/index.html</code> for you.
+        Interactive demos still need the build step — see the note at the bottom.
+      </p>
+
+      <!-- 1 · METADATA -->
+      <section>
+        <h2><span class="n">1</span> Post details</h2>
+        <label class="field">
+          <span class="lab">Title <span class="req">*</span></span>
+          <input type="text" id="title" placeholder="The many sides of PCA" />
+        </label>
+        <div class="row">
+          <label class="field">
+            <span class="lab">Slug <span class="req">*</span></span>
+            <input type="text" id="slug" placeholder="the-many-sides-of-pca" />
+            <span class="hint">Folder name under posts/. Auto-filled from the title.</span>
+          </label>
+          <label class="field">
+            <span class="lab">Date</span>
+            <input type="date" id="date" />
+          </label>
+        </div>
+        <label class="field">
+          <span class="lab">Preview / TLDR <span class="req">*</span></span>
+          <textarea id="tldr" rows="3" placeholder="One or two sentences shown in the blog listing."></textarea>
+        </label>
+        <label class="field">
+          <span class="lab">Badges</span>
+          <input type="text" id="tags" placeholder="interactive" />
+          <span class="hint">Comma-separated, shown after the date (e.g. interactive). A "notebook" link is added automatically if experiments.ipynb is among the artifacts.</span>
+        </label>
+      </section>
+
+      <!-- 2 · POST HTML -->
+      <section>
+        <h2><span class="n">2</span> Post HTML</h2>
+        <div class="seg" id="modeSeg">
+          <button data-mode="paste" class="on">Paste HTML</button>
+          <button data-mode="file">Upload .html file</button>
+        </div>
+        <div id="fileRow" style="display:none; margin-bottom:12px;">
+          <input type="file" id="htmlFile" accept=".html,.htm,text/html" />
+          <span class="hint">The file's contents are loaded into the box below; edit freely before publishing.</span>
+        </div>
+        <textarea id="htmlText" placeholder="Paste the full post HTML document here (e.g. a copy of an existing posts/*/index.html)."></textarea>
+      </section>
+
+      <!-- 3 · ARTIFACTS -->
+      <section>
+        <h2><span class="n">3</span> Artifacts</h2>
+        <input type="file" id="artFiles" multiple />
+        <div class="hint" style="margin-top:8px;">
+          Select every file the post references from <code>artifacts/</code> (figures, GIFs, experiments.ipynb…).
+          They're checked against the HTML below.
+        </div>
+        <ul class="files" id="fileList"></ul>
+        <div class="analysis" id="analysis"></div>
+      </section>
+
+      <!-- 4 · PREVIEW & PUBLISH -->
+      <section>
+        <h2><span class="n">4</span> Preview &amp; publish</h2>
+        <div class="actions">
+          <button class="btn primary" id="previewBtn" disabled>Build preview</button>
+          <button class="btn go" id="publishBtn" disabled>Publish post</button>
+          <span class="hint" id="gateHint"></span>
+        </div>
+        <div class="frame-wrap" id="frameWrap">
+          <iframe id="frame" title="Post preview"></iframe>
+        </div>
+        <div id="status"></div>
+      </section>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const state = { postHtml: "", artifacts: [], slugEdited: false };
+
+      $("date").value = new Date().toISOString().slice(0, 10);
+
+      function slugify(s) {
+        return String(s).toLowerCase().normalize("NFKD")
+          .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s-]/g, "")
+          .trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+      }
+
+      function referencedArtifacts(html) {
+        const re = /(?:src|href)\s*=\s*["']\s*(?:\.\/)?artifacts\/([^"'#?]+)(?:[#?][^"']*)?\s*["']/gi;
+        const set = new Set();
+        let m;
+        while ((m = re.exec(html))) {
+          try { set.add(decodeURIComponent(m[1])); } catch { set.add(m[1]); }
+        }
+        return set;
+      }
+
+      function meta() {
+        return {
+          title: $("title").value.trim(),
+          slug: $("slug").value.trim(),
+          date: $("date").value.trim(),
+          tldr: $("tldr").value.trim(),
+          tags: $("tags").value.split(",").map((s) => s.trim()).filter(Boolean),
+        };
+      }
+
+      function renderFileList(referenced) {
+        const ul = $("fileList");
+        ul.innerHTML = "";
+        state.artifacts.forEach((a, i) => {
+          const li = document.createElement("li");
+          const used = referenced.has(a.name);
+          li.innerHTML =
+            `<span class="name">${a.name}</span>` +
+            `<span class="chip ${used ? "used" : "unused"}">${used ? "referenced" : "unused"}</span>`;
+          const x = document.createElement("button");
+          x.className = "x";
+          x.textContent = "remove";
+          x.onclick = () => { state.artifacts.splice(i, 1); analyze(); };
+          li.appendChild(x);
+          ul.appendChild(li);
+        });
+      }
+
+      function analyze() {
+        // keep slug in sync unless the user has taken it over
+        if (!state.slugEdited) $("slug").value = slugify($("title").value);
+
+        const html = state.postHtml;
+        const referenced = referencedArtifacts(html);
+        const provided = new Set(state.artifacts.map((a) => a.name));
+        const missing = [...referenced].filter((a) => !provided.has(a));
+        const redundant = [...provided].filter((a) => !referenced.has(a));
+        const hasDemo = /data-demo\s*=|src\s*=\s*["']demo\//i.test(html);
+
+        renderFileList(referenced);
+
+        const boxes = [];
+        if (missing.length) {
+          boxes.push(
+            `<div class="box err"><b>Missing artifacts — cannot continue.</b> The post references ` +
+            `${missing.length} file(s) that weren't provided:<ul>` +
+            missing.map((a) => `<li><code>artifacts/${a}</code></li>`).join("") +
+            `</ul></div>`,
+          );
+        }
+        if (redundant.length) {
+          boxes.push(
+            `<div class="box warn"><b>Warning:</b> ${redundant.length} selected file(s) aren't ` +
+            `referenced by the post and will still be copied:<ul>` +
+            redundant.map((a) => `<li><code>${a}</code></li>`).join("") +
+            `</ul></div>`,
+          );
+        }
+        if (html.trim() && !missing.length && !redundant.length) {
+          const n = referenced.size;
+          boxes.push(
+            `<div class="box ok"><b>All good.</b> ${n} referenced artifact(s) accounted for.</div>`,
+          );
+        }
+        if (hasDemo) {
+          boxes.push(
+            `<div class="box info">This post looks like it uses an interactive demo ` +
+            `(<code>data-demo</code> / <code>demo/demo.js</code>). This tool copies the HTML and ` +
+            `artifacts only — after publishing, add <code>demo/demo.src.js</code> and run ` +
+            `<code>node build.mjs</code> so the demo bundles.</div>`,
+          );
+        }
+        $("analysis").innerHTML = boxes.join("");
+
+        const m = meta();
+        const slugOk = /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(m.slug);
+        const ready = !!m.title && !!m.tldr && slugOk && html.trim().length > 0 && missing.length === 0;
+        $("previewBtn").disabled = !ready;
+        $("publishBtn").disabled = !ready;
+
+        const gaps = [];
+        if (!m.title) gaps.push("title");
+        if (!m.tldr) gaps.push("TLDR");
+        if (!slugOk) gaps.push("valid slug");
+        if (!html.trim()) gaps.push("post HTML");
+        if (missing.length) gaps.push("all referenced artifacts");
+        $("gateHint").textContent = ready ? "" : "Needs: " + gaps.join(", ") + ".";
+      }
+
+      // --- inputs ---
+      $("title").addEventListener("input", analyze);
+      $("slug").addEventListener("input", () => { state.slugEdited = true; analyze(); });
+      $("tldr").addEventListener("input", analyze);
+      $("tags").addEventListener("input", analyze);
+      $("htmlText").addEventListener("input", () => { state.postHtml = $("htmlText").value; analyze(); });
+
+      $("modeSeg").addEventListener("click", (e) => {
+        const b = e.target.closest("button");
+        if (!b) return;
+        [...$("modeSeg").children].forEach((c) => c.classList.remove("on"));
+        b.classList.add("on");
+        $("fileRow").style.display = b.dataset.mode === "file" ? "block" : "none";
+      });
+
+      $("htmlFile").addEventListener("change", async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const t = await f.text();
+        $("htmlText").value = t;
+        state.postHtml = t;
+        analyze();
+      });
+
+      $("artFiles").addEventListener("change", (e) => {
+        for (const f of e.target.files) {
+          if (!state.artifacts.some((a) => a.name === f.name)) state.artifacts.push({ name: f.name, file: f });
+        }
+        e.target.value = "";
+        analyze();
+      });
+
+      // --- payload / server calls ---
+      function toB64(file) {
+        return new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => { const s = String(r.result); res(s.slice(s.indexOf(",") + 1)); };
+          r.onerror = rej;
+          r.readAsDataURL(file);
+        });
+      }
+      async function payload() {
+        const artifacts = [];
+        for (const a of state.artifacts) artifacts.push({ name: a.name, dataB64: await toB64(a.file) });
+        return { ...meta(), postHtml: state.postHtml, artifacts };
+      }
+
+      function log(html, cls = "") {
+        const line = document.createElement("div");
+        line.className = "line " + cls;
+        line.innerHTML = html;
+        $("status").prepend(line);
+      }
+      function logError(j) {
+        if (j.errors) j.errors.forEach((e) => log(e, "err"));
+        else if (j.missing) log((j.message || "Missing artifacts.") + " " + j.missing.map((a) => "artifacts/" + a).join(", "), "err");
+        else log(j.message || "Request failed.", "err");
+      }
+      async function call(path) {
+        const res = await fetch(path, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(await payload()),
+        });
+        return { res, j: await res.json() };
+      }
+
+      $("previewBtn").addEventListener("click", async () => {
+        log("Building preview…");
+        try {
+          const { res, j } = await call("/api/preview");
+          if (!res.ok || !j.ok) return logError(j);
+          $("frame").src = j.url + "?t=" + Date.now();
+          $("frameWrap").style.display = "block";
+          log(`Preview ready — <a href="${j.url}" target="_blank">open in a new tab</a>` +
+            (j.redundant && j.redundant.length ? ` · ${j.redundant.length} unused file(s) included` : ""), "ok");
+        } catch (err) { log(String(err), "err"); }
+      });
+
+      $("publishBtn").addEventListener("click", async () => {
+        const m = meta();
+        if (!confirm(`Create posts/${m.slug}/ and add it to the blog listing?`)) return;
+        log("Publishing…");
+        try {
+          const { res, j } = await call("/api/publish");
+          if (!res.ok || !j.ok) return logError(j);
+          log(`Published to <b>${j.dir}</b> and updated posts/index.html — ` +
+            `<a href="${j.url}" target="_blank">view the post</a> · ` +
+            `<a href="/posts/" target="_blank">see the listing</a>`, "ok");
+          $("publishBtn").disabled = true;
+          $("previewBtn").disabled = true;
+        } catch (err) { log(String(err), "err"); }
+      });
+
+      analyze();
+    </script>
+  </body>
+</html>

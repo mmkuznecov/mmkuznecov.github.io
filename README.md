@@ -43,3 +43,13 @@ Root-absolute paths need a server (opening the file directly won't resolve `/`):
 python -m http.server 8000
 # then open http://localhost:8000/
 ```
+
+## How to add a new post via UI:
+
+Run locally:
+
+```
+node authoring/server.mjs
+```
+
+and open `http://localhost:4321/` in your browser. You can create a new post, edit existing posts, and see a live preview of the changes.
